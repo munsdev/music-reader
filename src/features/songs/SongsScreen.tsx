@@ -18,9 +18,9 @@ import { previewMidis } from '../../core/edit'
 import { writeMusicXml } from '../../core/musicxml-writer'
 import { db } from '../../data/db'
 import { duplicateSong, mergeSongs, saveSong } from '../../data/repo'
-import type { Song } from '../../data/types'
+import type { Instrument, Song } from '../../data/types'
 import { safeFileName, shareFile } from '../../platform/files'
-import { useInstruments, useSongs } from '../../state/hooks'
+import { pickInstrument, useInstruments, useSongs } from '../../state/hooks'
 import { Bar } from '../../ui/Bar'
 import { Button, IconButton, Segmented } from '../../ui/controls'
 import { Screen } from '../../ui/Screen'
@@ -112,12 +112,19 @@ export function SongsScreen() {
         </div>
       )}
 
+      {songs && songs.length > 0 && songs.every((s) => s.sample) && (
+        <div className="bg-birch/50 mb-4 rounded-2xl px-4 py-3">
+          <p className="font-semibold">{t('songs.hintTitle')}</p>
+          <p className="text-ink/80 mt-1">{t('songs.hintBody')}</p>
+        </div>
+      )}
+
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {list.map((song) => (
           <SongCard
             key={song.id}
             song={song}
-            instrumentName={instruments?.find((i) => i.id === song.lastInstrumentId)?.name}
+            instrument={pickInstrument(song, instruments, undefined)}
             onMenu={() => setMenu(song)}
           />
         ))}
@@ -186,8 +193,9 @@ export function SongsScreen() {
                   label: s.title,
                   onSelect: async () => {
                     setMerging(null)
+                    const before = [merging, s]
                     await mergeSongs(merging, s)
-                    toast(t('songs.merged'))
+                    toast(t('songs.merged'), () => void db.songs.bulkPut(before))
                   },
                 }))}
             />
@@ -200,17 +208,20 @@ export function SongsScreen() {
 
 function SongCard({
   song,
-  instrumentName,
+  instrument,
   onMenu,
 }: {
   song: Song
-  instrumentName?: string
+  instrument?: Instrument
   onMenu: () => void
 }) {
+  const instrumentName = instrument?.name
   const { t } = useTranslation()
   const press = useLongPress(onMenu)
   const preview = previewMidis(song.score, 7)
   const palette = PALETTES[0]!
+  const colorOf = (m: number) =>
+    instrument?.notes.find((n) => n.midi === m)?.color ?? colorFor(m, palette)
   const pages = song.pages.length
   return (
     <li className="relative">
@@ -222,14 +233,15 @@ function SongCard({
         }}
         className="shadow-soft ring-stand/50 flex h-full min-h-40 flex-col rounded-3xl bg-white/80 p-4 pr-10 ring-1 transition-transform active:scale-[0.98] dark:bg-white/6"
       >
+        {song.sample && (
+          <span className="bg-felt/12 text-felt mb-1 self-start rounded-full px-2 py-0.5 text-xs font-bold">
+            {t('songs.sample')}
+          </span>
+        )}
         <span className="font-display line-clamp-2 text-lg leading-tight">{song.title}</span>
         <span aria-hidden className="mt-3 flex gap-1">
           {preview.map((m, i) => (
-            <span
-              key={i}
-              className="size-3.5 rounded-full"
-              style={{ background: colorFor(m, palette) }}
-            />
+            <span key={i} className="size-3.5 rounded-full" style={{ background: colorOf(m) }} />
           ))}
         </span>
         <span className="text-ink/65 mt-auto pt-3 text-sm">

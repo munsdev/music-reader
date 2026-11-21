@@ -6,6 +6,8 @@ import { newSong, uid } from '../../data/repo'
 import type { Page } from '../../data/types'
 import { pickFiles, readAsDataUrl } from '../../platform/files'
 import { toast } from '../../ui/toast'
+import { useSettings } from '../../state/settings'
+import { makePage } from '../../platform/pages'
 
 export const IMPORT_ACCEPT =
   '.musicxml,.xml,.mxl,application/vnd.recordare.musicxml+xml,application/vnd.recordare.musicxml,image/*,application/pdf'
@@ -31,7 +33,10 @@ export function useImport() {
     for (const file of scores) {
       try {
         const score = parseScoreFile(new Uint8Array(await file.arrayBuffer()), file.name)
-        const song = newSong(score.title, score, score.composer)
+        const song = {
+          ...newSong(score.title, score, score.composer),
+          lastInstrumentId: useSettings.getState().lastInstrumentId,
+        }
         await db.songs.add(song)
         lastId = song.id
       } catch (e) {
@@ -44,11 +49,11 @@ export function useImport() {
     }
 
     const pages: Page[] = []
-    for (const img of images) pages.push(newPage(await readAsDataUrl(img)))
+    for (const img of images) pages.push(await makePage(await readAsDataUrl(img)))
     for (const pdf of pdfs) {
       try {
         const { pdfToImages } = await import('../../platform/pdf-pages')
-        for (const url of await pdfToImages(pdf)) pages.push(newPage(url))
+        for (const url of await pdfToImages(pdf)) pages.push(await makePage(url))
       } catch {
         toast(t('import.pdfFailed', { name: pdf.name }))
       }

@@ -6,100 +6,109 @@ import {
   Crop,
   FilePdf,
   Images,
+  Plus,
   Trash,
 } from '@phosphor-icons/react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { replacePage } from '../../core/edit'
-import { db } from '../../data/db'
 import { saveSong } from '../../data/repo'
-import type { Corners, Page, Song } from '../../data/types'
-import { omr, OmrError, type Stage } from '../../omr/engine'
+import type { Page, Song } from '../../data/types'
+import { omr, OmrError, recognitionReady, type Stage } from '../../omr/engine'
 import { readPage } from '../../omr/read-page'
 import { pickImages, takePhoto } from '../../platform/camera'
 import { pickFiles } from '../../platform/files'
+import { makePage, pageSrc, refreshView } from '../../platform/pages'
 import { useSong } from '../../state/hooks'
 import { Bar } from '../../ui/Bar'
-import { Button, IconButton } from '../../ui/controls'
 import { Screen } from '../../ui/Screen'
-import { Sheet } from '../../ui/Sheet'
+import { ActionList, Sheet } from '../../ui/Sheet'
 import { toast } from '../../ui/toast'
-import { newPage } from '../songs/useImport'
 
-const FULL: Corners = [
-  [0, 0],
-  [1, 0],
-  [1, 1],
-  [0, 1],
-]
+/** Where a flow should return when finished: back to the stand it came from, or replace. */
+export interface FlowState {
+  fromStand?: boolean
+}
 
+export function hasNotes(song: Song): boolean {
+  return song.score.parts.some((p) => p.measures.some((m) => m.events.length > 0))
+}
+
+/**
+ * Step 1 of adding a song from a songbook: the pages. One primary action at the bottom.
+ * Tap a page for crop, rotate, retake, move and remove.
+ */
 export function PagesScreen() {
   const { id } = useParams()
-  const [params, setParams] = useSearchParams()
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
+  const state = (location.state ?? {}) as FlowState
   const song = useSong(id)
-  const [cropping, setCropping] = useState<Page | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false)
   const [reading, setReading] = useState<{ page: number; stage?: Stage } | null>(null)
   const [needModels, setNeedModels] = useState(false)
-  const opened = useRef(false)
-
-  const update = async (s: Song, pages: Page[], extra: Partial<Song> = {}) =>
-    saveSong({ ...s, ...extra, pages })
-
-  const addPhotos = async (s: Song, photos: string[], replaceId?: string) => {
-    if (!photos.length) return
-    if (replaceId) {
-      await update(
-        s,
-        s.pages.map((p) => (p.id === replaceId ? { ...newPage(photos[0]!), id: p.id } : p)),
-      )
-    } else {
-      await update(s, [...s.pages, ...photos.map(newPage)])
-    }
-  }
-
-  // Scan flow: open the camera straight away.
-  useEffect(() => {
-    if (!song || opened.current || params.get('camera') !== '1') return
-    opened.current = true
-    setParams({}, { replace: true })
-    void takePhoto().then((p) => {
-      if (p) void addPhotos(song, [p])
-    })
-  }, [song, params, setParams])
+  const [busy, setBusy] = useState(false)
+  const ready = recognitionReady()
 
   if (song === null) return <Navigate to="/" replace />
   if (!song)
     return (
-      <Screen title="" back="/">
+      <Screen title="" back>
         {null}
       </Screen>
     )
 
-  const unread = song.pages.filter((p) => p.status !== 'read')
-  const leave = async () => {
-    if (song.pages.length === 0 && song.score.parts.length === 0) {
-      await db.songs.delete(song.id)
-      navigate('/', { replace: true })
-    } else navigate(song.score.parts.length ? `/song/${song.id}` : '/')
+  const selected = song.pages.find((p) => p.id === selectedId) ?? null
+  const save = (pages: Page[], extra: Partial<Song> = {}) => saveSong({ ...song, ...extra, pages })
+
+  const addPhotos = async (photos: string[]) => {
+    if (!photos.length) return
+    setBusy(true)
+    const pages = await Promise.all(photos.map(makePage))
+    await save([...song.pages, ...pages])
+    setBusy(false)
   }
 
-  const move = (i: number, d: -1 | 1) => {
+  const move = (page: Page, d: -1 | 1) => {
     const pages = [...song.pages]
+    const i = pages.findIndex((p) => p.id === page.id)
     const j = i + d
-    if (j < 0 || j >= pages.length) return
+    if (i < 0 || j < 0 || j >= pages.length) return
     ;[pages[i], pages[j]] = [pages[j]!, pages[i]!]
-    const order = pages.map((p) => p.id)
-    // Keep the notes in page order too.
     const score = song.score.parts.length
-      ? replacePage(song.score, order, '', undefined)
+      ? replacePage(
+          song.score,
+          pages.map((p) => p.id),
+          '',
+          undefined,
+        )
       : song.score
-    void update(song, pages, { score })
+    void save(pages, { score })
+  }
+
+  const rotate = async (page: Page) => {
+    setBusy(true)
+    const rotated = await refreshView({
+      ...page,
+      rotation: ((page.rotation + 90) % 360) as Page['rotation'],
+      status: page.status === 'read' ? 'new' : page.status,
+    })
+    await save(song.pages.map((p) => (p.id === page.id ? rotated : p)))
+    setBusy(false)
+  }
+
+  const retake = async (page: Page) => {
+    const photo = await takePhoto()
+    if (!photo) return
+    const fresh = await makePage(photo)
+    await save(song.pages.map((p) => (p.id === page.id ? { ...fresh, id: page.id } : p)))
   }
 
   const remove = async (page: Page) => {
+    setSelectedId(null)
     const pages = song.pages.filter((p) => p.id !== page.id)
     const score = song.score.parts.length
       ? replacePage(
@@ -109,9 +118,14 @@ export function PagesScreen() {
           undefined,
         )
       : song.score
-    await update(song, pages, { score })
+    await save(pages, { score })
     toast(t('pages.removed'), () => void saveSong(song))
   }
+
+  /** Go to the next step of the flow, replacing this screen so Back stays simple. */
+  const go = (path: string) => navigate(path, { replace: true, state })
+  const finish = () =>
+    state.fromStand ? navigate(-1) : navigate(`/song/${song.id}`, { replace: true })
 
   const readAll = async () => {
     const status = await omr.modelStatus()
@@ -121,7 +135,8 @@ export function PagesScreen() {
       if (page.status === 'read') continue
       setReading({ page: index + 1 })
       try {
-        const { score, modelVersion } = await readPage(page, index, (stage) =>
+        const source = { ...page, photo: pageSrc(page), corners: undefined, rotation: 0 as const }
+        const { score, modelVersion } = await readPage(source, index, (stage) =>
           setReading({ page: index + 1, stage }),
         )
         const pages = current.pages.map((p) =>
@@ -129,8 +144,9 @@ export function PagesScreen() {
             ? { ...p, status: 'read' as const, score, modelVersion, error: undefined }
             : p,
         )
+        const base = current.score.parts.length ? current.score : { ...score, parts: [] }
         const merged = replacePage(
-          current.score.parts.length ? current.score : { ...score, parts: [] },
+          base,
           pages.map((p) => p.id),
           page.id,
           score,
@@ -148,71 +164,40 @@ export function PagesScreen() {
       await saveSong(current)
     }
     setReading(null)
-    if (current.pages.every((p) => p.status === 'read'))
-      navigate(`/song/${song.id}/edit?review=1`, { replace: true })
+    if (current.pages.every((p) => p.status === 'read')) go(`/song/${song.id}/edit?review=1`)
     else toast(t('pages.someFailed'))
   }
+
+  const unread = song.pages.filter((p) => p.status !== 'read').length
+  const notes = hasNotes(song)
+  let primary: { label: string; onClick: () => void }
+  if (song.pages.length === 0)
+    primary = { label: t('pages.addFirst'), onClick: () => setAdding(true) }
+  else if (!ready)
+    primary = {
+      label: notes ? t('pages.tapMore') : t('pages.tapIn'),
+      onClick: () => go(`/write?song=${song.id}`),
+    }
+  else if (unread > 0)
+    primary = {
+      label: reading
+        ? t('pages.reading', { page: reading.page, total: song.pages.length })
+        : t('pages.readMusic', { count: unread }),
+      onClick: () => void readAll(),
+    }
+  else primary = { label: t('pages.backToSong'), onClick: finish }
 
   return (
     <Screen
       title={t('pages.title')}
       back
       footer={
-        <div className="flex flex-col gap-2">
-          <div className="flex justify-center gap-1">
-            <Button
-              icon={<Camera size={20} />}
-              onClick={async () => {
-                const p = await takePhoto()
-                if (p) await addPhotos(song, [p])
-              }}
-            >
-              {t('pages.camera')}
-            </Button>
-            <Button
-              icon={<Images size={20} />}
-              onClick={async () => addPhotos(song, await pickImages())}
-            >
-              {t('pages.gallery')}
-            </Button>
-            <Button
-              icon={<FilePdf size={20} />}
-              onClick={async () => {
-                const [file] = await pickFiles('application/pdf')
-                if (!file) return
-                const { pdfToImages } = await import('../../platform/pdf-pages')
-                await addPhotos(song, await pdfToImages(file))
-              }}
-            >
-              PDF
-            </Button>
-          </div>
-          {unread.length > 0 ? (
-            <Bar disabled={!!reading} onClick={readAll}>
-              {reading
-                ? t('pages.reading', { page: reading.page, total: song.pages.length })
-                : t('pages.readMusic', { count: unread.length })}
-            </Bar>
-          ) : (
-            song.pages.length > 0 && (
-              <Bar onClick={() => navigate(`/song/${song.id}`)}>{t('pages.done')}</Bar>
-            )
-          )}
-        </div>
+        <Bar className="w-full" disabled={busy || !!reading} onClick={primary.onClick}>
+          {busy ? t('common.loading') : primary.label}
+        </Bar>
       }
     >
-      <label className="mb-4 flex flex-col gap-1">
-        <span className="text-ink/60 text-sm font-bold">{t('songs.titleLabel')}</span>
-        <input
-          defaultValue={song.title}
-          onBlur={(e) => {
-            const title = e.target.value.trim()
-            if (title && title !== song.title)
-              void saveSong({ ...song, title, score: { ...song.score, title } })
-          }}
-          className="bg-ink/6 font-display min-h-14 rounded-2xl px-4 text-xl"
-        />
-      </label>
+      <p className="text-ink/70 -mt-1 mb-4">{t('pages.step', { title: song.title })}</p>
 
       {reading?.stage && (
         <p role="status" className="bg-felt/10 text-felt mb-3 rounded-2xl px-4 py-3 font-semibold">
@@ -220,125 +205,158 @@ export function PagesScreen() {
         </p>
       )}
 
-      {song.pages.length === 0 && (
-        <p className="text-ink/70 py-12 text-center">{t('pages.empty')}</p>
-      )}
-
-      <ol className="flex flex-col gap-4">
+      <ol className="grid grid-cols-2 gap-3">
         {song.pages.map((page, i) => (
-          <li
-            key={page.id}
-            className="ring-stand/60 flex gap-3 rounded-3xl bg-white/80 p-3 ring-1 dark:bg-white/5"
-          >
-            <div className="bg-stand/40 relative w-28 shrink-0 overflow-hidden rounded-xl">
+          <li key={page.id}>
+            <button
+              type="button"
+              onClick={() => setSelectedId(page.id)}
+              aria-label={t('pages.pageActions', { n: i + 1 })}
+              className="ring-stand/70 relative block w-full overflow-hidden rounded-2xl bg-white ring-1"
+            >
               <img
-                src={page.photo}
-                alt={t('pages.pageN', { n: i + 1 })}
-                className="aspect-[3/4] w-full object-cover"
-                style={{ transform: `rotate(${page.rotation}deg)` }}
+                src={pageSrc(page)}
+                alt=""
+                className="block aspect-[3/4] w-full object-contain"
               />
-              <span className="bg-ink text-paper absolute top-1 left-1 rounded-full px-2 text-sm font-bold">
+              <span className="bg-ink text-paper absolute top-2 left-2 rounded-full px-2.5 py-0.5 text-sm font-bold">
                 {i + 1}
               </span>
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="font-semibold">{t('pages.pageN', { n: i + 1 })}</span>
-              <span
-                className={`text-sm ${page.status === 'failed' ? 'text-alert' : 'text-ink/65'}`}
-              >
-                {page.status === 'failed'
-                  ? t(`pages.error.${page.error ?? 'failed'}`)
-                  : t(`pages.status.${page.status}`)}
-              </span>
-              <div className="mt-auto flex flex-wrap">
-                <IconButton
-                  label={t('pages.moveUp')}
-                  disabled={i === 0}
-                  onClick={() => move(i, -1)}
-                >
-                  <ArrowUp size={20} />
-                </IconButton>
-                <IconButton
-                  label={t('pages.moveDown')}
-                  disabled={i === song.pages.length - 1}
-                  onClick={() => move(i, 1)}
-                >
-                  <ArrowDown size={20} />
-                </IconButton>
-                <IconButton label={t('pages.crop')} onClick={() => setCropping(page)}>
-                  <Crop size={20} />
-                </IconButton>
-                <IconButton
-                  label={t('pages.rotate')}
-                  onClick={() =>
-                    void update(
-                      song,
-                      song.pages.map((p) =>
-                        p.id === page.id
-                          ? {
-                              ...p,
-                              rotation: ((p.rotation + 90) % 360) as Page['rotation'],
-                              status: p.status === 'read' ? p.status : 'new',
-                            }
-                          : p,
-                      ),
-                    )
-                  }
-                >
-                  <ArrowClockwise size={20} />
-                </IconButton>
-                <IconButton
-                  label={t('pages.retake')}
-                  onClick={async () => {
-                    const p = await takePhoto()
-                    if (p) await addPhotos(song, [p], page.id)
-                  }}
-                >
-                  <Camera size={20} />
-                </IconButton>
-                <IconButton label={t('pages.remove')} onClick={() => void remove(page)}>
-                  <Trash size={20} />
-                </IconButton>
-              </div>
-              {page.status === 'read' && (
-                <Button
-                  className="self-start"
-                  onClick={() =>
-                    void update(
-                      song,
-                      song.pages.map((p) => (p.id === page.id ? { ...p, status: 'new' } : p)),
-                    )
-                  }
-                >
-                  {t('pages.readAgain')}
-                </Button>
+              {page.corners && (
+                <span className="bg-paper/90 text-ink absolute top-2 right-2 rounded-full px-2 py-0.5 text-xs font-bold">
+                  {t('pages.cropped')}
+                </span>
               )}
-            </div>
+              {page.status === 'failed' && (
+                <span className="bg-alert absolute inset-x-0 bottom-0 px-2 py-1 text-xs font-bold text-white">
+                  {t(`pages.error.${page.error ?? 'failed'}`)}
+                </span>
+              )}
+            </button>
           </li>
         ))}
+        <li>
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="border-stand text-felt flex aspect-[3/4] w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed font-semibold"
+          >
+            <Plus size={28} weight="bold" />
+            {t('pages.addPage')}
+          </button>
+        </li>
       </ol>
-      {song.pages.length > 0 && (
-        <Button className="mt-4 w-full" onClick={leave}>
-          {t('common.done')}
-        </Button>
+
+      {!ready && song.pages.length > 0 && (
+        <div className="bg-birch/50 mt-5 rounded-2xl px-4 py-3">
+          <p className="font-semibold">{t('pages.noReaderTitle')}</p>
+          <p className="text-ink/80 mt-1">{t('pages.noReaderBody')}</p>
+        </div>
       )}
 
-      <CropSheet
-        page={cropping}
-        onClose={() => setCropping(null)}
-        onSave={(corners) => {
-          if (cropping)
-            void update(
-              song,
-              song.pages.map((p) =>
-                p.id === cropping.id
-                  ? { ...p, corners, status: p.status === 'read' ? 'new' : p.status }
-                  : p,
-              ),
-            )
-          setCropping(null)
-        }}
-      />
+      <Sheet open={adding} onClose={() => setAdding(false)} title={t('pages.addPage')}>
+        <ActionList
+          items={[
+            {
+              label: t('pages.camera'),
+              icon: <Camera size={22} />,
+              onSelect: async () => {
+                setAdding(false)
+                const p = await takePhoto()
+                if (p) await addPhotos([p])
+              },
+            },
+            {
+              label: t('pages.gallery'),
+              icon: <Images size={22} />,
+              onSelect: async () => {
+                setAdding(false)
+                await addPhotos(await pickImages())
+              },
+            },
+            {
+              label: t('pages.pdf'),
+              icon: <FilePdf size={22} />,
+              onSelect: async () => {
+                setAdding(false)
+                const [file] = await pickFiles('application/pdf')
+                if (!file) return
+                const { pdfToImages } = await import('../../platform/pdf-pages')
+                await addPhotos(await pdfToImages(file))
+              },
+            },
+          ]}
+        />
+      </Sheet>
+
+      <Sheet
+        open={!!selected}
+        onClose={() => setSelectedId(null)}
+        title={
+          selected
+            ? t('pages.pageN', { n: song.pages.findIndex((p) => p.id === selected.id) + 1 })
+            : ''
+        }
+      >
+        {selected && (
+          <>
+            <img
+              src={pageSrc(selected)}
+              alt=""
+              className="ring-stand mb-3 max-h-64 w-full rounded-xl bg-white object-contain ring-1"
+            />
+            <ActionList
+              items={[
+                {
+                  label: t('pages.crop'),
+                  icon: <Crop size={22} />,
+                  onSelect: () => {
+                    setSelectedId(null)
+                    navigate(`/song/${song.id}/page/${selected.id}/crop`)
+                  },
+                },
+                {
+                  label: t('pages.rotate'),
+                  icon: <ArrowClockwise size={22} />,
+                  onSelect: () => void rotate(selected),
+                },
+                {
+                  label: t('pages.retake'),
+                  icon: <Camera size={22} />,
+                  onSelect: () => {
+                    setSelectedId(null)
+                    void retake(selected)
+                  },
+                },
+                ...(song.pages[0]?.id !== selected.id
+                  ? [
+                      {
+                        label: t('pages.moveUp'),
+                        icon: <ArrowUp size={22} />,
+                        onSelect: () => move(selected, -1),
+                      },
+                    ]
+                  : []),
+                ...(song.pages.at(-1)?.id !== selected.id
+                  ? [
+                      {
+                        label: t('pages.moveDown'),
+                        icon: <ArrowDown size={22} />,
+                        onSelect: () => move(selected, 1),
+                      },
+                    ]
+                  : []),
+                {
+                  label: t('pages.remove'),
+                  icon: <Trash size={22} />,
+                  danger: true,
+                  onSelect: () => void remove(selected),
+                },
+              ]}
+            />
+          </>
+        )}
+      </Sheet>
       <ModelsSheet
         open={needModels}
         onClose={() => setNeedModels(false)}
@@ -348,91 +366,6 @@ export function PagesScreen() {
         }}
       />
     </Screen>
-  )
-}
-
-/** Four draggable corners over the photo. Corners are stored as fractions. */
-function CropSheet({
-  page,
-  onClose,
-  onSave,
-}: {
-  page: Page | null
-  onClose: () => void
-  onSave: (c: Corners) => void
-}) {
-  const { t } = useTranslation()
-  const [corners, setCorners] = useState<Corners>(FULL)
-  const box = useRef<HTMLDivElement>(null)
-  const dragging = useRef<number | null>(null)
-  useEffect(() => setCorners(page?.corners ?? FULL), [page])
-
-  const onMove = (e: React.PointerEvent) => {
-    const i = dragging.current
-    const el = box.current
-    if (i === null || !el) return
-    const r = el.getBoundingClientRect()
-    const x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width))
-    const y = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))
-    setCorners((c) => c.map((p, j) => (j === i ? [x, y] : p)) as Corners)
-  }
-
-  return (
-    <Sheet
-      open={!!page}
-      onClose={onClose}
-      title={t('pages.crop')}
-      footer={
-        <Bar className="w-full" onClick={() => onSave(corners)}>
-          {t('common.save')}
-        </Bar>
-      }
-    >
-      {page && (
-        <>
-          <p className="text-ink/75 mb-3">{t('pages.cropHint')}</p>
-          <div
-            ref={box}
-            className="relative touch-none select-none"
-            onPointerMove={onMove}
-            onPointerUp={() => (dragging.current = null)}
-          >
-            <img src={page.photo} alt="" className="w-full rounded-xl" draggable={false} />
-            <svg
-              className="pointer-events-none absolute inset-0 size-full"
-              viewBox="0 0 1 1"
-              preserveAspectRatio="none"
-              aria-hidden
-            >
-              <polygon
-                points={corners.map((c) => c.join(',')).join(' ')}
-                fill="rgb(58 111 143 / 0.15)"
-                stroke="var(--color-felt)"
-                strokeWidth={0.006}
-              />
-            </svg>
-            {corners.map(([x, y], i) => (
-              <button
-                key={i}
-                type="button"
-                aria-label={t('pages.corner', { n: i + 1 })}
-                onPointerDown={(e) => {
-                  ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-                  dragging.current = i
-                }}
-                onPointerMove={onMove}
-                onPointerUp={() => (dragging.current = null)}
-                className="border-felt bg-paper/60 absolute size-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-4"
-                style={{ left: `${x * 100}%`, top: `${y * 100}%` }}
-              />
-            ))}
-          </div>
-          <Button className="mt-2" onClick={() => setCorners(FULL)}>
-            {t('pages.resetCrop')}
-          </Button>
-        </>
-      )}
-    </Sheet>
   )
 }
 
@@ -479,7 +412,6 @@ export function ModelsSheet({
       }
     >
       <p>{t('models.body', { size: size ? Math.round(size / 1e6) : '?' })}</p>
-      {!omr.available && <p className="text-ink/65 mt-3 text-sm">{t('models.devNote')}</p>}
     </Sheet>
   )
 }

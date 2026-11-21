@@ -10,6 +10,8 @@ export interface PlayerOptions {
   metronome: boolean
   /** Keep time and move the cursor without playing the notes (Follow mode). */
   muted?: boolean
+  /** Measured frequency per MIDI note of the real instrument, to match its tuning. */
+  tuning?: Map<number, number>
   /** Measure index range to loop, inclusive. */
   loop?: [number, number]
 }

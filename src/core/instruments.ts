@@ -11,6 +11,11 @@ export interface InstrumentNote {
   shape: NoteShape
   /** Optional sticker text that overrides the generated label. */
   label?: string
+  /**
+   * Measured frequency of this bar on the real toy, set by "Set up by listening".
+   * Used to match the toy's own tuning in playback and listening modes.
+   */
+  hz?: number
 }
 
 export type InstrumentKind = 'bars' | 'keys' | 'tubes' | 'bells'

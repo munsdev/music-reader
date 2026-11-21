@@ -29,11 +29,12 @@ export function pickInstrument(
   lastId?: string,
 ): Instrument | undefined {
   if (!instruments?.length) return undefined
-  return (
-    instruments.find((i) => i.id === song?.lastInstrumentId) ??
-    instruments.find((i) => i.id === lastId) ??
-    instruments[0]
-  )
+  const own = instruments.find((i) => i.id === song?.lastInstrumentId)
+  if (own) return own
+  // A new song follows the instrument used last. An existing song without its own choice
+  // keeps the first instrument ever set up, so adding an instrument never changes it.
+  if (!song) return instruments.find((i) => i.id === lastId) ?? instruments[0]
+  return [...instruments].sort((a, b) => a.createdAt - b.createdAt)[0]
 }
 
 export function useFit(

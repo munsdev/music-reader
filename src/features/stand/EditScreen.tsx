@@ -8,7 +8,8 @@ import {
 } from '@phosphor-icons/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import type { FlowState } from './PagesScreen'
 import { synth } from '../../audio/synth'
 import {
   DURATIONS,
@@ -48,6 +49,7 @@ export function EditScreen() {
   const review = params.get('review') === '1'
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const song = useSong(id)
   const labels = useLabelSettings()
   const [selected, setSelected] = useState<string | null>(null)
@@ -131,7 +133,14 @@ export function EditScreen() {
         event ? (
           <NotePanel song={song} id={event.id} apply={apply} onClose={() => setSelected(null)} />
         ) : (
-          <Bar className="w-full" onClick={() => navigate(`/song/${song.id}`, { replace: true })}>
+          <Bar
+            className="w-full"
+            onClick={() =>
+              (location.state as FlowState | null)?.fromStand
+                ? navigate(-1)
+                : navigate(`/song/${song.id}`, { replace: true })
+            }
+          >
             {review ? t('edit.looksGood') : t('common.done')}
           </Bar>
         )
@@ -155,7 +164,7 @@ export function EditScreen() {
 
       {page && (
         <div className="ring-stand relative mb-4 overflow-hidden rounded-2xl bg-white ring-1">
-          <img src={page.photo} alt={t('edit.photoAlt')} className="w-full" />
+          <img src={page.view ?? page.photo} alt={t('edit.photoAlt')} className="w-full" />
           {song.score.parts[0]?.measures.flatMap((m) =>
             m.events
               .filter((e) => e.recognition && song.pages[e.recognition.box.page] === page)

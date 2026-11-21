@@ -1,4 +1,5 @@
-import { Minus, Plus, Printer } from '@phosphor-icons/react'
+import { Microphone, Minus, Plus, Printer } from '@phosphor-icons/react'
+import { colorName } from '../../core/color-names'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -105,13 +106,22 @@ export function InstrumentEditor() {
         instrument={inst}
         labels={labels}
         selected={selected ?? undefined}
-        onStrike={(m) => {
-          synth.strike(m, inst.sound)
-          setSelected(m)
-        }}
+        onStrike={(m) =>
+          synth.strike(m, inst.sound, 0, 0.8, inst.notes.find((n) => n.midi === m)?.hz)
+        }
+        onSelect={(m) => setSelected(m)}
         height={220}
       />
       <p className="text-ink/65 mt-2 text-center text-sm">{t('instruments.tapToEdit')}</p>
+      <Bar
+        tone="birch"
+        className="mt-3 w-full"
+        icon={<Microphone size={22} weight="bold" />}
+        onClick={() => navigate(`/instruments/${inst.id}/listen`)}
+      >
+        {t('listen.open')}
+      </Bar>
+      <p className="text-ink/65 mt-1 text-center text-sm">{t('listen.openHint')}</p>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
         <EndControl
@@ -281,11 +291,15 @@ function NoteEditor({
   onChange: (n: InstrumentNote) => void
 }) {
   const { t } = useTranslation()
+  const colorLabel = (c: string) => {
+    const n = colorName(c)
+    return t(`colors.${n.name}`) + (n.tone !== 'normal' ? ` (${t(`colors.${n.tone}`)})` : '')
+  }
   const free = (m: number) => m >= 21 && m <= 108 && (m === note.midi || !taken.includes(m))
   const move = (d: number) => {
     let m = note.midi + d
     while (!free(m) && m >= 21 && m <= 108) m += d
-    if (free(m)) onChange({ ...note, midi: m })
+    if (free(m)) onChange({ ...note, midi: m, shape: shapeFor(m), hz: undefined })
   }
   return (
     <div className="flex flex-col gap-5">
@@ -318,7 +332,7 @@ function NoteEditor({
             <button
               key={c}
               type="button"
-              aria-label={c}
+              aria-label={colorLabel(c)}
               aria-pressed={note.color === c}
               onClick={() => onChange({ ...note, color: c })}
               className={`size-11 rounded-full ${note.color === c ? 'ring-ink ring-offset-paper ring-3 ring-offset-2' : ''}`}

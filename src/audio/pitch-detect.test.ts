@@ -1,4 +1,4 @@
-import { detectPitch, matchesNote } from './pitch-detect'
+import { detectPitch, matchesHz, matchesNote, StrikeDetector } from './pitch-detect'
 import { midiToHz } from './synth'
 
 function tone(hz: number, sr = 44100, n = 2048, overtone = 0) {
@@ -25,5 +25,28 @@ describe('detectPitch', () => {
   it('rejects wrong notes and accepts octave errors', () => {
     expect(matchesNote(midiToHz(62), 60)).toBe(false)
     expect(matchesNote(midiToHz(72), 60)).toBe(true)
+  })
+})
+
+describe('StrikeDetector', () => {
+  it('reports one stable reading per strike and ignores the same note ringing on', () => {
+    const d = new StrikeDetector(5, 35)
+    const out: number[] = []
+    for (let i = 0; i < 20; i++) {
+      const r = d.push(440 + (i % 2))
+      if (r) out.push(r)
+    }
+    expect(out).toHaveLength(1)
+    for (let i = 0; i < 10; i++) d.push(null)
+    for (let i = 0; i < 5; i++) {
+      const r = d.push(440)
+      if (r) out.push(r)
+    }
+    expect(out).toHaveLength(2)
+  })
+
+  it('matches a measured, out-of-tune bar', () => {
+    expect(matchesHz(452, 450)).toBe(true)
+    expect(matchesHz(480, 450)).toBe(false)
   })
 })

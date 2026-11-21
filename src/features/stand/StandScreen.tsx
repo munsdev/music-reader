@@ -1,9 +1,7 @@
 import {
   ArrowCounterClockwise,
-  CaretDown,
-  DotsThreeVertical,
+  CaretRight,
   Files,
-  Faders,
   Gauge,
   HandTap,
   Microphone,
@@ -16,7 +14,7 @@ import {
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { listen, matchesNote, type Listener } from '../../audio/pitch-detect'
+import { listen, matchesHz, matchesNote, type Listener } from '../../audio/pitch-detect'
 import { synth } from '../../audio/synth'
 import { saveSong } from '../../data/repo'
 import type { Instrument } from '../../data/types'
@@ -28,7 +26,7 @@ import {
   useSong,
 } from '../../state/hooks'
 import { useSettings } from '../../state/settings'
-import { Button, IconButton, Segmented, Stepper, Switch } from '../../ui/controls'
+import { Button, Segmented, Stepper, Switch } from '../../ui/controls'
 import { InstrumentThumb, InstrumentView } from '../../ui/InstrumentView'
 import { Screen } from '../../ui/Screen'
 import { ActionList, Sheet } from '../../ui/Sheet'
@@ -54,7 +52,12 @@ export function StandScreen() {
   const instrument = pickInstrument(song, instruments, lastInstrumentId)
   const fit = useFit(song, instrument)
   const sound = instrument?.sound ?? 'xylophone'
-  const pb = usePlayback(fit?.score, sound)
+  const tuning = useMemo(
+    () =>
+      new Map((instrument?.notes ?? []).flatMap((n) => (n.hz ? [[n.midi, n.hz] as const] : []))),
+    [instrument],
+  )
+  const pb = usePlayback(fit?.score, sound, tuning)
 
   const [view, setView] = useState<View>('circles')
   const [size, setSize] = useState<CircleSize>('m')
@@ -64,6 +67,16 @@ export function StandScreen() {
   >(null)
   const [mic, setMic] = useState(false)
   const listener = useRef<Listener | null>(null)
+  const [countIn, setCountIn] = useState<number | null>(null)
+  const [wrong, setWrong] = useState<number | undefined>()
+  const countTimers = useRef<ReturnType<typeof setTimeout>[]>([])
+  useEffect(() => () => countTimers.current.forEach(clearTimeout), [])
+
+  // A song keeps the instrument it was first shown with, so adding instruments never changes it.
+  useEffect(() => {
+    if (song && instrument && !song.lastInstrumentId)
+      void saveSong({ ...song, lastInstrumentId: instrument.id })
+  }, [song, instrument])
 
   const waiting = mode === 'wait' || mode === 'tap'
   const current = useMemo(() => idsAt(pb.timeline, pb.index), [pb.timeline, pb.index])
@@ -93,9 +106,11 @@ export function StandScreen() {
   }
   const advanceRef = useRef(advance)
   const expectedRef = useRef(expected)
+  const tuningRef = useRef(tuning)
   useEffect(() => {
     advanceRef.current = advance
     expectedRef.current = expected
+    tuningRef.current = tuning
   })
 
   // Microphone listening for Wait for me.
@@ -107,7 +122,13 @@ export function StandScreen() {
     listen((hz) => {
       const now = performance.now()
       if (!hz || now < cooldown) return (hits = 0)
-      if (expectedRef.current.some((m) => matchesNote(hz, m))) hits++
+      if (
+        expectedRef.current.some((m) => {
+          const measured = tuningRef.current.get(m)
+          return measured ? matchesHz(hz, measured) : matchesNote(hz, m)
+        })
+      )
+        hits++
       else hits = 0
       if (hits >= 3) {
         hits = 0
@@ -151,13 +172,31 @@ export function StandScreen() {
     await saveSong({ ...song, lastInstrumentId: i.id })
   }
 
+  /** Play, showing the count-in beats so the pause before the first note is not silent. */
+  const startPlay = () => {
+    countTimers.current.forEach(clearTimeout)
+    const first = pb.timeline.measures[0]
+    if (pb.options.countIn && first && pb.index <= 0) {
+      const beat = (first.beatDuration / pb.options.rate) * 1000
+      for (let i = 0; i < first.beats; i++)
+        countTimers.current.push(setTimeout(() => setCountIn(i + 1), 50 + i * beat))
+      countTimers.current.push(setTimeout(() => setCountIn(null), 50 + first.beats * beat))
+    }
+    pb.play()
+  }
+
   const strike = (midi: number) => {
-    synth.strike(midi, sound)
-    if (waiting && expected.includes(midi)) advance()
+    synth.strike(midi, sound, 0, 0.8, tuning.get(midi))
+    if (!waiting) return
+    if (expected.includes(midi)) advance()
+    else {
+      setWrong(midi)
+      setTimeout(() => setWrong(undefined), 450)
+    }
   }
 
   const onNote = (eventId: string, midi: number | undefined) => {
-    if (midi !== undefined) synth.strike(midi, sound)
+    if (midi !== undefined) synth.strike(midi, sound, 0, 0.8, tuning.get(midi))
     const i = pb.timeline.notes.findIndex((n) => n.ids.includes(eventId))
     if (i >= 0) pb.seekNote(i)
   }
@@ -170,11 +209,6 @@ export function StandScreen() {
     <Screen
       title={song.title}
       back="/"
-      actions={
-        <IconButton label={t('common.more')} onClick={() => setSheet('menu')}>
-          <DotsThreeVertical size={24} weight="bold" />
-        </IconButton>
-      }
       footer={
         <div className="flex flex-col gap-3">
           {showInstrument && (
@@ -184,72 +218,103 @@ export function StandScreen() {
               active={pb.playing ? playingMidis : []}
               next={waiting ? expected : pb.playing ? midisAt(pb.timeline, nextI) : []}
               onStrike={strike}
+              wrong={wrong}
               height={view === 'strip' ? 260 : 150}
             />
           )}
-          <div className="flex items-center gap-2">
-            <IconButton
+          <div className="flex items-end justify-between gap-1">
+            <LabeledButton
               label={t('stand.restart')}
+              short={t('stand.restartShort')}
+              icon={<ArrowCounterClockwise size={24} />}
               onClick={() => (waiting ? pb.setIndex(0) : pb.restart())}
-            >
-              <ArrowCounterClockwise size={24} />
-            </IconButton>
+            />
             {waiting ? (
-              <Button variant="outline" className="flex-1" onClick={advance}>
+              <Button variant="outline" className="mb-1 flex-1" onClick={advance}>
                 {t('stand.nextNote')}
               </Button>
             ) : (
-              <button
-                type="button"
-                aria-label={pb.playing ? t('stand.pause') : t('stand.play')}
-                onClick={() => (pb.playing ? pb.pause() : pb.play())}
-                className="bg-felt mx-auto flex size-16 items-center justify-center rounded-full text-white shadow-[inset_0_-3px_0_rgb(0_0_0/0.25)] active:translate-y-0.5"
-              >
-                {pb.playing ? <Pause size={30} weight="fill" /> : <Play size={30} weight="fill" />}
-              </button>
+              <div className="flex flex-col items-center">
+                <button
+                  type="button"
+                  aria-label={pb.playing ? t('stand.pause') : t('stand.play')}
+                  onClick={() => (pb.playing ? pb.pause() : startPlay())}
+                  className="bg-felt flex size-16 items-center justify-center rounded-full text-white shadow-[inset_0_-3px_0_rgb(0_0_0/0.25)] active:translate-y-0.5"
+                >
+                  {pb.playing ? (
+                    <Pause size={30} weight="fill" />
+                  ) : (
+                    <Play size={30} weight="fill" />
+                  )}
+                </button>
+                <span aria-hidden className="mt-0.5 text-xs font-semibold">
+                  {pb.playing ? t('stand.pause') : t('stand.play')}
+                </span>
+              </div>
             )}
             {mode === 'wait' && (
-              <IconButton
+              <LabeledButton
                 label={mic ? t('stand.micOff') : t('stand.micOn')}
+                short={mic ? t('stand.micOnShort') : t('stand.micOffShort')}
                 active={mic}
+                icon={mic ? <Microphone size={24} /> : <MicrophoneSlash size={24} />}
                 onClick={() => setMic(!mic)}
-              >
-                {mic ? <Microphone size={24} /> : <MicrophoneSlash size={24} />}
-              </IconButton>
+              />
             )}
-            <IconButton
+            <LabeledButton
               label={t('stand.practice')}
+              short={t('stand.practiceShort')}
               active={mode !== 'listen'}
+              icon={<HandTap size={24} />}
               onClick={() => setSheet('practice')}
-            >
-              <HandTap size={24} />
-            </IconButton>
-            <IconButton label={t('stand.playback')} onClick={() => setSheet('playback')}>
-              <Gauge size={24} />
-            </IconButton>
+            />
+            <LabeledButton
+              label={t('stand.playback')}
+              short={t('stand.playbackShort')}
+              icon={<Gauge size={24} />}
+              onClick={() => setSheet('playback')}
+            />
           </div>
         </div>
       }
     >
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setSheet('instrument')}
-          className="bg-ink/5 flex min-h-12 items-center gap-2 rounded-2xl py-1 pr-3 pl-1.5 font-semibold"
-          aria-label={t('stand.changeInstrument', { name: instrument.name })}
-        >
-          <InstrumentThumb instrument={instrument} height={36} />
-          <span className="max-w-40 truncate">{instrument.name}</span>
-          <CaretDown size={16} weight="bold" />
-        </button>
+      <button
+        type="button"
+        onClick={() => setSheet('instrument')}
+        className="bg-ink/5 mb-2 flex min-h-12 w-full items-center gap-3 rounded-2xl py-1.5 pr-3 pl-1.5 text-left font-semibold"
+        aria-label={t('stand.changeInstrument', { name: instrument.name })}
+      >
+        <InstrumentThumb instrument={instrument} height={36} />
+        <span className="min-w-0 flex-1 leading-tight">{instrument.name}</span>
+        <span className="text-felt text-sm">{t('stand.change')}</span>
+      </button>
+      <div className="mb-3 grid grid-cols-3 gap-2">
+        <Chip
+          icon={<Files size={20} />}
+          label={t('stand.pages')}
+          onClick={() => navigate(`/song/${song.id}/pages`, { state: { fromStand: true } })}
+        />
+        <Chip
+          icon={<PencilSimple size={20} />}
+          label={t('stand.fixNotes')}
+          onClick={() => navigate(`/song/${song.id}/edit`, { state: { fromStand: true } })}
+        />
+        <Chip
+          icon={<Printer size={20} />}
+          label={t('stand.printShort')}
+          onClick={() => setSheet('print')}
+        />
+      </div>
+      {fit.changes.length > 0 && (
         <button
           type="button"
           onClick={() => setSheet('fit')}
-          className={`min-h-12 rounded-2xl px-3 font-semibold ${fit.changes.length ? 'bg-check/20' : 'bg-ink/5'}`}
+          className="bg-check/20 mb-3 flex min-h-12 w-full items-center justify-between rounded-2xl px-4 text-left font-semibold"
         >
-          {t('stand.fitChip', { percent: Math.round(fit.fit * 100) })}
+          {t('stand.fitChanges', { count: fit.changes.length })}
+          <CaretRight size={18} weight="bold" />
         </button>
-      </div>
+      )}
 
       <Segmented
         label={t('stand.view')}
@@ -261,11 +326,12 @@ export function StandScreen() {
           { value: 'strip', label: t('stand.strip') },
         ]}
       />
-      {mode !== 'listen' && (
-        <p className="bg-felt/10 text-felt mt-3 rounded-2xl px-4 py-2 text-sm font-semibold">
-          {t(`practice.${mode}Active`)}
-        </p>
-      )}
+      <p
+        className="bg-felt/10 text-felt mt-3 rounded-2xl px-4 py-2 text-sm font-semibold"
+        role="status"
+      >
+        {countIn !== null ? t('stand.countInBeat', { n: countIn }) : t(`practice.${mode}Active`)}
+      </p>
 
       <div className="mt-4">
         {view === 'circles' && (
@@ -303,33 +369,6 @@ export function StandScreen() {
           </div>
         )}
       </div>
-
-      <Sheet open={sheet === 'menu'} onClose={() => setSheet(null)} title={song.title}>
-        <ActionList
-          items={[
-            {
-              label: t('stand.fitTitle'),
-              icon: <Faders size={22} />,
-              onSelect: () => setSheet('fit'),
-            },
-            {
-              label: t('stand.print'),
-              icon: <Printer size={22} />,
-              onSelect: () => setSheet('print'),
-            },
-            {
-              label: t('stand.editNotes'),
-              icon: <PencilSimple size={22} />,
-              onSelect: () => navigate(`/song/${song.id}/edit`),
-            },
-            {
-              label: t('stand.pages'),
-              icon: <Files size={22} />,
-              onSelect: () => navigate(`/song/${song.id}/pages`),
-            },
-          ]}
-        />
-      </Sheet>
 
       <Sheet
         open={sheet === 'instrument'}
@@ -475,5 +514,55 @@ function LoopControls({
         </div>
       )}
     </div>
+  )
+}
+
+function LabeledButton({
+  label,
+  short,
+  icon,
+  onClick,
+  active,
+}: {
+  label: string
+  short?: string
+  icon: React.ReactNode
+  onClick: () => void
+  active?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={active}
+      onClick={onClick}
+      className={`flex min-h-16 min-w-16 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 ${active ? 'bg-felt/12 text-felt' : 'text-ink'}`}
+    >
+      {icon}
+      <span aria-hidden className="text-xs leading-tight font-semibold">
+        {short ?? label}
+      </span>
+    </button>
+  )
+}
+
+function Chip({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="bg-ink/5 flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 text-sm font-semibold"
+    >
+      {icon}
+      {label}
+    </button>
   )
 }

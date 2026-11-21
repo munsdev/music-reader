@@ -39,8 +39,9 @@ export function CirclesView({
     return () => ro.disconnect()
   }, [])
 
-  const d = SIZES[size]
-  const unit = d * 1.3
+  // Medium fits two 4/4 measures per row on a phone; other sizes are fixed.
+  const d = size === 'm' ? Math.max(34, Math.min(SIZES.m, width / 9.4)) : SIZES[size]
+  const unit = d * 1.08
   const part = score.parts[0]
   const rows = useMemo(
     () =>

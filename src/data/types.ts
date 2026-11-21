@@ -13,6 +13,8 @@ export interface Page {
   photo: string
   corners?: Corners
   rotation: 0 | 90 | 180 | 270
+  /** The photo with crop and rotation applied (JPEG data URL). Shown everywhere and read by recognition. */
+  view?: string
   status: PageStatus
   error?: string
   modelVersion?: string
@@ -31,6 +33,8 @@ export interface Song {
   /** The song's notes. For scanned songs, the joined page scores plus the user's edits. */
   score: Score
   lastInstrumentId?: string
+  /** The built-in sample song. */
+  sample?: boolean
   /** Fit overrides per instrument id. */
   fit: Record<string, FitOptions>
 }

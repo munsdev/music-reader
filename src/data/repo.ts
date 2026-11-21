@@ -28,7 +28,7 @@ export async function seedIfEmpty(): Promise<void> {
   await db.transaction('rw', db.songs, async () => {
     if ((await db.songs.count()) === 0) {
       const score = sampleScore()
-      await db.songs.add(newSong(score.title, score, score.composer))
+      await db.songs.add({ ...newSong(score.title, score, score.composer), sample: true })
     }
   })
 }
@@ -100,4 +100,15 @@ export async function ensureInstrument(name: string): Promise<void> {
   if ((await db.instruments.count()) > 0) return
   const preset = PRESETS.find((p) => p.id === DEFAULT_PRESET_ID)!
   await db.instruments.add(instrumentFrom(preset, name))
+}
+
+/** Remove songs with no pages and no notes (left behind by a cancelled scan or an empty draft). */
+export async function pruneEmptySongs(): Promise<number> {
+  const empty = (await db.songs.toArray()).filter(
+    (s) =>
+      s.pages.length === 0 &&
+      !s.score.parts.some((p) => p.measures.some((m) => m.events.length > 0)),
+  )
+  await db.songs.bulkDelete(empty.map((s) => s.id))
+  return empty.length
 }

@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { exportLibrary, importLibrary } from '../../data/repo'
-import { omr, type ModelStatus } from '../../omr/engine'
+import { omr, recognitionReady, type ModelStatus } from '../../omr/engine'
 import { pickFiles, shareFile } from '../../platform/files'
 import { useSettings, type Settings } from '../../state/settings'
 import { Button, Select, Switch } from '../../ui/controls'
@@ -115,36 +115,42 @@ export function SettingsScreen() {
         />
       </Section>
 
-      <Section title={t('settings.recognition')}>
-        <p className="py-2">
-          {models?.installed
-            ? t('settings.modelsInstalled', { version: models.version ?? '' })
-            : t('settings.modelsMissing')}
-        </p>
-        <Switch
-          label={t('settings.wifiOnly')}
-          checked={s.modelsWifiOnly}
-          onChange={(modelsWifiOnly) => s.set({ modelsWifiOnly })}
-        />
-        <div className="flex gap-2 py-2">
-          {models?.installed ? (
-            <Button
-              variant="danger"
-              icon={<Trash size={20} />}
-              onClick={async () => {
-                await omr.removeModels()
-                refresh()
-              }}
-            >
-              {t('settings.removeModels')}
-            </Button>
-          ) : (
-            <Button icon={<DownloadSimple size={20} />} onClick={() => setInstall(true)}>
-              {t('models.download')}
-            </Button>
-          )}
-        </div>
-      </Section>
+      {recognitionReady() ? (
+        <Section title={t('settings.recognition')}>
+          <p className="py-2">
+            {models?.installed
+              ? t('settings.modelsInstalled', { version: models.version ?? '' })
+              : t('settings.modelsMissing')}
+          </p>
+          <Switch
+            label={t('settings.wifiOnly')}
+            checked={s.modelsWifiOnly}
+            onChange={(modelsWifiOnly) => s.set({ modelsWifiOnly })}
+          />
+          <div className="flex gap-2 py-2">
+            {models?.installed ? (
+              <Button
+                variant="danger"
+                icon={<Trash size={20} />}
+                onClick={async () => {
+                  await omr.removeModels()
+                  refresh()
+                }}
+              >
+                {t('settings.removeModels')}
+              </Button>
+            ) : (
+              <Button icon={<DownloadSimple size={20} />} onClick={() => setInstall(true)}>
+                {t('models.download')}
+              </Button>
+            )}
+          </div>
+        </Section>
+      ) : (
+        <Section title={t('settings.recognition')}>
+          <p className="py-2">{t('settings.recognitionNotYet')}</p>
+        </Section>
+      )}
 
       <Section title={t('settings.library')}>
         <div className="flex flex-wrap gap-2 py-2">

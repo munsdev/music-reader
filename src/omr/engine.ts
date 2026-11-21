@@ -169,3 +169,9 @@ export const omr: OmrEngine = Capacitor.isPluginAvailable('Omr')
 
 /** Notes below this confidence are flagged for checking in Review. */
 export const REVIEW_THRESHOLD = 0.7
+
+/**
+ * True when photos can really be read: the native engine is installed, or this is a
+ * developer build using the mock. Release test builds without recognition say so honestly.
+ */
+export const recognitionReady = (): boolean => omr.available || import.meta.env.DEV

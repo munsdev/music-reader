@@ -9,7 +9,11 @@ import { useSettings } from '../../state/settings'
 export type PracticeMode = 'listen' | 'follow' | 'wait' | 'tap'
 
 /** Timeline, player and the "current note" cursor for a fitted score. */
-export function usePlayback(score: Score | undefined, sound: SoundKind) {
+export function usePlayback(
+  score: Score | undefined,
+  sound: SoundKind,
+  tuning?: Map<number, number>,
+) {
   const timeline = useMemo(
     () => (score ? buildTimeline(score) : { notes: [], measures: [], duration: 0 }),
     [score],
@@ -29,7 +33,7 @@ export function usePlayback(score: Score | undefined, sound: SoundKind) {
     player.load(timeline)
     setIndex(-1)
   }, [player, timeline])
-  useEffect(() => player.configure({ ...options, sound }), [player, options, sound])
+  useEffect(() => player.configure({ ...options, sound, tuning }), [player, options, sound, tuning])
   useEffect(
     () =>
       player.subscribe((s) => {

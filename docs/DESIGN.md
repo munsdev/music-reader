@@ -138,6 +138,10 @@ Settings ─▶ Note names, language, theme, recognition models, about, licenses
 4. **Read music**. Pages are recognized one by one, in the background, with a notification when done.
 5. **Review** (section 05). Then **Fit** to the instrument, then the play view.
 
+**WHILE PHOTO RECOGNITION IS NOT READY** (approved by Casey, November 2026)
+
+Builds without working recognition never show a fake reader. Scanning still saves the photos, cropped and rotated, and the Pages screen says plainly that this version cannot read notes from photos yet. Its one action is **Tap in the notes**, which opens Write a song with the page photo above the bars, zoomable, one page at a time, so the parent copies the notes by tapping. When recognition ships, the same button becomes Read the music.
+
 **ADD PAGES TO A SONG THAT ALREADY EXISTS**
 
 The page is the unit of a song. A song is an ordered list of pages, and each page holds its photo and the measures read from it.
@@ -288,6 +292,7 @@ Songs ▶ **New**. The instrument is drawn at the bottom of the screen; tapping 
 - Palette menu recolors everything at once. "Chords" switch sets one-note or multi-note playing.
 - **Tap to hear:** every bar plays its tone, so the user can match it against the real toy by ear.
 - **Print stickers:** a sheet of round labels in the instrument's colors for toys with unlabeled bars.
+- **Set up by listening** (requested by Casey, November 2026): strike one bar at a time; the app hears its pitch and shows the nearest note and how far off it is, and the parent taps the color of that bar. Each bar stores its measured frequency, so playback sounds like the real toy and the listening practice modes match the toy's own tuning, even when it is out of tune.
 
 **PRINT AND SHARE**: get paper for the music stand
 

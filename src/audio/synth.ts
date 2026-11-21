@@ -108,11 +108,12 @@ class Synth {
   }
 
   /** Strike a note at `when` (AudioContext time). Struck sounds ring on their own. */
-  strike(midi: number, sound: SoundKind, when = 0, velocity = 0.8): void {
+  strike(midi: number, sound: SoundKind, when = 0, velocity = 0.8, hz?: number): void {
     const ctx = this.context()
     const out = this.master!
     const t = Math.max(when, ctx.currentTime)
-    const f0 = midiToHz(midi)
+    // A measured frequency (from "Set up by listening") matches the real toy's tuning.
+    const f0 = hz ?? midiToHz(midi)
     const voice = VOICES[sound]
     // Higher notes decay faster on real bars.
     const decayScale = Math.min(1.3, Math.max(0.5, 440 / f0) ** 0.35)

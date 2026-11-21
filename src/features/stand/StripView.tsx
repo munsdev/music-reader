@@ -24,7 +24,7 @@ export function UpcomingLane({
     <div
       aria-label={t('stand.comingUp')}
       role="list"
-      className="flex min-h-20 items-center gap-3 overflow-hidden px-1"
+      className="flex min-h-28 items-center gap-3 overflow-hidden px-2 py-2"
     >
       {notes.map((n, i) => {
         const color = colors.get(n.midi) ?? 'var(--color-stand)'

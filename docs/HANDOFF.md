@@ -79,7 +79,8 @@ Version 0.1, November 2026. What exists in the repo today, verified how, and wha
 
 ## 03 &nbsp; K N O W N &nbsp; L I M I T A T I O N S , &nbsp; P R E C I S E L Y
 
-- Recognition in this build is a mock that returns the same short melody for every page. It exists so the scan, review and fit flow can be built and tested.
+- Release test builds have no photo recognition and say so; the scan flow leads to Tap in the notes with the page photo. The mock reader runs only in `npm run dev`.
+- Set up by listening is tested with synthetic tones only; it needs a check with real toy bars.
 - The staff view cursor moves by time, so in multi-voice music it may sit between notes of different voices.
 - Microphone pitch detection is tested only on synthetic tones.
 - The licenses screen lists npm packages automatically; fonts, icons, oemer and DeepScoresV2 are listed by hand in `src/features/settings/LicensesScreen.tsx` and must be kept current.

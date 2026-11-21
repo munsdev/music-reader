@@ -23,7 +23,9 @@ export function WelcomeScreen() {
         onStrike={(m) => synth.strike(m, 'xylophone')}
       />
       <p className="text-ink/60 text-center text-sm">{t('onboarding.tryIt')}</p>
-      <Bar onClick={() => navigate('/welcome/instrument')}>{t('onboarding.setUp')}</Bar>
+      <Bar onClick={() => navigate('/welcome/instrument', { replace: true })}>
+        {t('onboarding.setUp')}
+      </Bar>
     </div>
   )
 }

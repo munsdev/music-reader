@@ -61,6 +61,51 @@ export function matchesNote(hz: number, expectedMidi: number, toleranceCents = 6
   return Math.abs(folded) <= toleranceCents
 }
 
+/** True when the heard frequency matches a target frequency (a measured bar), octave errors allowed. */
+export function matchesHz(hz: number, targetHz: number, toleranceCents = 60): boolean {
+  const cents = 1200 * Math.log2(hz / targetHz)
+  const folded = (((cents % 1200) + 1800) % 1200) - 600
+  return Math.abs(folded) <= toleranceCents
+}
+
+/**
+ * Collects pitch readings and reports one stable note per strike: the median of several
+ * consecutive readings that agree within `spreadCents`. A new strike is reported only after
+ * the pitch changes or the sound stops.
+ */
+export class StrikeDetector {
+  private run: number[] = []
+  private lastReported: number | null = null
+  private silentFrames = 0
+  private readonly minFrames: number
+  private readonly spreadCents: number
+  constructor(minFrames = 5, spreadCents = 35) {
+    this.minFrames = minFrames
+    this.spreadCents = spreadCents
+  }
+
+  push(hz: number | null): number | null {
+    if (hz === null) {
+      this.run = []
+      if (++this.silentFrames > 6) this.lastReported = null
+      return null
+    }
+    this.silentFrames = 0
+    const first = this.run[0]
+    if (first !== undefined && Math.abs(1200 * Math.log2(hz / first)) > this.spreadCents)
+      this.run = []
+    this.run.push(hz)
+    if (this.run.length < this.minFrames) return null
+    const sorted = [...this.run].sort((a, b) => a - b)
+    const median = sorted[Math.floor(sorted.length / 2)]!
+    this.run = []
+    if (this.lastReported !== null && Math.abs(1200 * Math.log2(median / this.lastReported)) < 50)
+      return null
+    this.lastReported = median
+    return median
+  }
+}
+
 export interface Listener {
   stop(): void
 }

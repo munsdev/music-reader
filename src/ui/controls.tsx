@@ -82,7 +82,7 @@ export function Segmented<T extends string>({
             tap()
             onChange(o.value)
           }}
-          className={`flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-colors ${value === o.value ? 'bg-paper text-ink shadow-soft' : 'text-ink/65'}`}
+          className={`flex min-h-12 flex-1 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-colors ${value === o.value ? 'bg-paper text-ink shadow-soft' : 'text-ink/65'}`}
         >
           {o.icon}
           {o.label}

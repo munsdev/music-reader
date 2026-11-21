@@ -14,7 +14,9 @@ export function InstrumentView({
   active = [],
   next = [],
   selected,
+  wrong,
   onStrike,
+  onSelect,
   height = 180,
   className = '',
 }: {
@@ -23,17 +25,26 @@ export function InstrumentView({
   active?: number[]
   next?: number[]
   selected?: number
+  /** A bar that was just struck by mistake (shown with a short red ring). */
+  wrong?: number
   onStrike?: (midi: number) => void
+  /**
+   * Called on a completed tap (click), after the finger lifts. Use this to open editors,
+   * so the same tap can never land on whatever opens under the finger.
+   */
+  onSelect?: (midi: number) => void
   height?: number
   className?: string
 }) {
   const n = instrument.notes.length
+  // More than 12 notes: keep every bar at least 44 px wide and let the row scroll.
+  const crowded = n > 12
   const keys = instrument.kind === 'keys'
   return (
     <div
       role="group"
       aria-label={instrument.name}
-      className={`bg-birch flex items-center justify-center gap-[3px] rounded-[22px] px-3 py-3 shadow-[inset_0_-4px_0_rgb(0_0_0/0.1)] ${className}`}
+      className={`bg-birch flex items-center gap-[3px] overflow-x-auto rounded-[22px] px-3 py-3 shadow-[inset_0_-4px_0_rgb(0_0_0/0.1)] ${crowded ? 'justify-start' : 'justify-center'} ${className}`}
       style={{ height }}
     >
       {instrument.notes.map((note, i) => {
@@ -54,18 +65,22 @@ export function InstrumentView({
               e.preventDefault()
               onStrike?.(note.midi)
             }}
+            onClick={() => onSelect?.(note.midi)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
                 onStrike?.(note.midi)
+                onSelect?.(note.midi)
               }
             }}
             className="group relative flex min-w-0 flex-1 touch-none flex-col items-center justify-between rounded-[10px] py-2 outline-offset-2 transition-[transform,filter] duration-75"
             style={{
               height: `${frac * 100}%`,
               maxWidth: 64,
+              minWidth: crowded ? 44 : undefined,
+              flexShrink: crowded ? 0 : undefined,
               background: note.color,
-              boxShadow: `inset 0 2px 0 rgb(255 255 255 / 0.35), inset 0 -4px 0 rgb(0 0 0 / 0.18)${isSel ? ', 0 0 0 3px var(--color-ink)' : ''}${isNext ? ', 0 0 0 3px var(--color-felt)' : ''}`,
+              boxShadow: `inset 0 2px 0 rgb(255 255 255 / 0.35), inset 0 -4px 0 rgb(0 0 0 / 0.18)${isSel ? ', 0 0 0 3px var(--color-ink)' : ''}${isNext ? ', 0 0 0 3px var(--color-felt)' : ''}${wrong === note.midi ? ', 0 0 0 4px var(--color-alert)' : ''}`,
               transform: isActive ? 'translateY(3px)' : undefined,
               filter: isActive ? 'brightness(1.25) saturate(1.1)' : undefined,
             }}
