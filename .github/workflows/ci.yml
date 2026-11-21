@@ -127,6 +127,8 @@ jobs:
     name: Start on an Android emulator
     needs: android-debug
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v5
         with:
@@ -162,3 +164,12 @@ jobs:
           path: |
             screen-*.png
             logcat.txt
+      - name: Attach screenshots to the smoke-test pre-release
+        if: always() && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view smoke-test --repo ${{ github.repository }} >/dev/null 2>&1 || \
+            gh release create smoke-test --repo ${{ github.repository }} --prerelease --latest=false \
+              --title "Emulator smoke test (not an app release)" --notes "Screenshots from the latest CI emulator run."
+          gh release upload smoke-test screen-*.png logcat.txt --repo ${{ github.repository }} --clobber
