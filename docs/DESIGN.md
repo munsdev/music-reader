@@ -14,11 +14,11 @@ A free, offline Android app. You photograph sheet music, one page or many, and t
 
 **WHO IT IS FOR**
 
-| User | Situation | What they need |
-|---|---|---|
-| Parent | Kid's 8-bar xylophone and a songbook | A song a 4-year-old can follow, in minutes |
-| Music teacher | Class set of bells or tubes | Printable colored sheets for a group, same colors every time |
-| Beginner adult | Keyboard with stickers on the keys | A colored score that matches the stickers |
+| User           | Situation                            | What they need                                               |
+| -------------- | ------------------------------------ | ------------------------------------------------------------ |
+| Parent         | Kid's 8-bar xylophone and a songbook | A song a 4-year-old can follow, in minutes                   |
+| Music teacher  | Class set of bells or tubes          | Printable colored sheets for a group, same colors every time |
+| Beginner adult | Keyboard with stickers on the keys   | A colored score that matches the stickers                    |
 
 **PRINCIPLES**
 
@@ -42,14 +42,14 @@ Not this: primary-color confetti, cartoon mascots, bubble fonts, star bursts, ra
 
 **COLOR (APP CHROME)**
 
-| Token | Hex | Use |
-|---|---|---|
-| `paper` | `#F3F6FA` | App background. Cool, faintly blue white, like a clean music stand sheet |
-| `ink` | `#1E2A47` | Text, icons, staff lines. A deep navy, never pure black |
-| `birch` | `#E7D7B8` | Wood: instrument frames, the mallet handle, selected states on wood items |
-| `felt` | `#3A6F8F` | The single UI accent: primary buttons, links, focus rings, the play cursor |
-| `stand` | `#C9D2DE` | Dividers, inactive bars, empty slots |
-| `brass` | `#B8893B` | Nail dots on bars, small detail only |
+| Token   | Hex       | Use                                                                        |
+| ------- | --------- | -------------------------------------------------------------------------- |
+| `paper` | `#F3F6FA` | App background. Cool, faintly blue white, like a clean music stand sheet   |
+| `ink`   | `#1E2A47` | Text, icons, staff lines. A deep navy, never pure black                    |
+| `birch` | `#E7D7B8` | Wood: instrument frames, the mallet handle, selected states on wood items  |
+| `felt`  | `#3A6F8F` | The single UI accent: primary buttons, links, focus rings, the play cursor |
+| `stand` | `#C9D2DE` | Dividers, inactive bars, empty slots                                       |
+| `brass` | `#B8893B` | Nail dots on bars, small detail only                                       |
 
 Dark theme swaps `paper` to `#141B2D` and `ink` to `#E8EDF5`; `birch` darkens to `#5A4A33`. Note colors never change between themes.
 
@@ -59,9 +59,9 @@ Defined per instrument (section 06). The default "Rainbow" palette is the famili
 
 **TYPE**
 
-| Role | Typeface | Why |
-|---|---|---|
-| Song titles, screen titles | Young Serif (OFL) | The friendly, slightly old-fashioned serif of a children's songbook |
+| Role                                   | Typeface                         | Why                                                                                                                            |
+| -------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Song titles, screen titles             | Young Serif (OFL)                | The friendly, slightly old-fashioned serif of a children's songbook                                                            |
 | Everything else, including note labels | Atkinson Hyperlegible Next (OFL) | Designed for low-vision readers; distinguishes B, 8, D, 0 and similar glyphs, which matters for 4-year-olds reading note names |
 
 Both are bundled in the app (offline) and embedded in PDFs. Type scale on a 16 px base: 14, 16, 20, 25, 31, 39. Sentence case everywhere in the UI. No all-caps labels.
@@ -309,13 +309,13 @@ Covered in section 07.
 
 **PRESETS**
 
-| Preset | Notes | Kind |
-|---|---|---|
-| 8-note xylophone or bells | C4 to C5, white notes | Bars |
-| 15-note glockenspiel | C5 to C7, white notes | Bars |
-| 25-key toy keyboard | C4 to C6, all notes | Keys, chords allowed |
-| Tuned tubes, 8 notes | C4 to C5, white notes | Tubes |
-| Tuned tubes, 13 notes | C4 to C5, all notes | Tubes |
+| Preset                    | Notes                 | Kind                 |
+| ------------------------- | --------------------- | -------------------- |
+| 8-note xylophone or bells | C4 to C5, white notes | Bars                 |
+| 15-note glockenspiel      | C5 to C7, white notes | Bars                 |
+| 25-key toy keyboard       | C4 to C6, all notes   | Keys, chords allowed |
+| Tuned tubes, 8 notes      | C4 to C5, white notes | Tubes                |
+| Tuned tubes, 13 notes     | C4 to C5, all notes   | Tubes                |
 
 **PALETTES**
 
@@ -346,12 +346,12 @@ Some commercial tube and bell sets use their own color schemes; the user matches
 
 **LAYOUT OPTIONS**
 
-| Option | Choices |
-|---|---|
-| Style | Circles, colored staff, or staff with circles underneath |
-| Size | Regular, large, extra large (for toddlers: fewer measures per line) |
-| Ink | Full color, light color (pastel fills with colored outlines, saves ink), black and white (shapes and labels only) |
-| Extras | Instrument legend, measure numbers, title and composer header, page numbers, a blank line for the child's name |
+| Option | Choices                                                                                                           |
+| ------ | ----------------------------------------------------------------------------------------------------------------- |
+| Style  | Circles, colored staff, or staff with circles underneath                                                          |
+| Size   | Regular, large, extra large (for toddlers: fewer measures per line)                                               |
+| Ink    | Full color, light color (pastel fills with colored outlines, saves ink), black and white (shapes and labels only) |
+| Extras | Instrument legend, measure numbers, title and composer header, page numbers, a blank line for the child's name    |
 
 **WHAT EVERY PAGE HAS**
 
@@ -387,12 +387,12 @@ Some commercial tube and bell sets use their own color schemes; the user matches
 
 **PRACTICE MODES**
 
-| Mode | What happens | For |
-|---|---|---|
-| Listen | The app plays the song, cursor follows | Learning how it goes |
-| Follow | The app plays a click; the child plays the real instrument; cursor keeps time | Playing along at tempo |
-| Wait for me | The cursor waits until the right note is played, then moves on | Toddlers and first songs |
-| Tap along | The child plays on the on-screen instrument instead of a real one | No instrument at hand |
+| Mode        | What happens                                                                  | For                      |
+| ----------- | ----------------------------------------------------------------------------- | ------------------------ |
+| Listen      | The app plays the song, cursor follows                                        | Learning how it goes     |
+| Follow      | The app plays a click; the child plays the real instrument; cursor keeps time | Playing along at tempo   |
+| Wait for me | The cursor waits until the right note is played, then moves on                | Toddlers and first songs |
+| Tap along   | The child plays on the on-screen instrument instead of a real one             | No instrument at hand    |
 
 "Wait for me" and "Follow" can listen through the microphone: the app detects the pitch the child plays (on-device pitch detection, no recording saved) and lights up the note when it is right. Without microphone permission, a parent can tap "Next" instead. The microphone is off unless one of these modes is running, and the app says so on screen.
 
@@ -456,22 +456,22 @@ Recognized pages each produce their own measures; the song's score is the concat
 
 ### Standard tools, all compatible with a free app that takes tips
 
-| Layer | Choice | License |
-|---|---|---|
-| UI | React 19, TypeScript, Tailwind CSS 4, React Router | MIT |
-| State | Zustand | MIT |
-| Storage | Dexie, Capacitor Filesystem and Preferences | Apache-2.0, MIT |
-| Native shell | Capacitor 8 (Android) | MIT |
-| Notation | OpenSheetMusicDisplay | BSD-3-Clause |
-| PDF | pdf-lib | MIT |
-| .mxl unzip | fflate | MIT |
-| i18n | i18next, react-i18next | MIT |
-| Icons | Phosphor Icons | MIT |
-| Fonts | Young Serif, Atkinson Hyperlegible Next | SIL OFL 1.1 |
-| Recognition | Native Kotlin plugin: ONNX Runtime Android, OpenCV Android, oemer pipeline port, retrained model | MIT, Apache-2.0, MIT |
-| Tips | cordova-plugin-purchase (Google Play Billing) | MIT |
-| Tests | Vitest, Testing Library; JVM tests for the plugin | MIT |
-| Lint and format | oxlint, Prettier | MIT |
+| Layer           | Choice                                                                                           | License              |
+| --------------- | ------------------------------------------------------------------------------------------------ | -------------------- |
+| UI              | React 19, TypeScript, Tailwind CSS 4, React Router                                               | MIT                  |
+| State           | Zustand                                                                                          | MIT                  |
+| Storage         | Dexie, Capacitor Filesystem and Preferences                                                      | Apache-2.0, MIT      |
+| Native shell    | Capacitor 8 (Android)                                                                            | MIT                  |
+| Notation        | OpenSheetMusicDisplay                                                                            | BSD-3-Clause         |
+| PDF             | pdf-lib                                                                                          | MIT                  |
+| .mxl unzip      | fflate                                                                                           | MIT                  |
+| i18n            | i18next, react-i18next                                                                           | MIT                  |
+| Icons           | Phosphor Icons                                                                                   | MIT                  |
+| Fonts           | Young Serif, Atkinson Hyperlegible Next                                                          | SIL OFL 1.1          |
+| Recognition     | Native Kotlin plugin: ONNX Runtime Android, OpenCV Android, oemer pipeline port, retrained model | MIT, Apache-2.0, MIT |
+| Tips            | cordova-plugin-purchase (Google Play Billing)                                                    | MIT                  |
+| Tests           | Vitest, Testing Library; JVM tests for the plugin                                                | MIT                  |
+| Lint and format | oxlint, Prettier                                                                                 | MIT                  |
 
 App code is Apache-2.0 with a `NOTICE` file. The Licenses screen is generated at build time from the dependency tree, plus a maintained list for fonts, models and datasets (CC BY 4.0 needs attribution in the app).
 
@@ -479,12 +479,12 @@ App code is Apache-2.0 with a `NOTICE` file. The Licenses screen is generated at
 
 ## 13 &nbsp; R E L E A S E &nbsp; P L A N
 
-| Milestone | Contents |
-|---|---|
-| M1 Core | Data model, MusicXML and .mxl import, fit rules, presets, instrument editor, songs and instruments saved, circles and staff views, playback, PDF export |
-| M2 Recognition | Native OMR plugin, retrained clean model, capture, pages (multi-page, add pages, merge), review |
-| M3 Play along | Strip view, practice modes, microphone pitch detection, sticker sheet, MIDI export |
-| M4 Store | German, accessibility pass, tips, licenses screen, signed AAB, listing, Families review, closed testing |
+| Milestone      | Contents                                                                                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M1 Core        | Data model, MusicXML and .mxl import, fit rules, presets, instrument editor, songs and instruments saved, circles and staff views, playback, PDF export |
+| M2 Recognition | Native OMR plugin, retrained clean model, capture, pages (multi-page, add pages, merge), review                                                         |
+| M3 Play along  | Strip view, practice modes, microphone pitch detection, sticker sheet, MIDI export                                                                      |
+| M4 Store       | German, accessibility pass, tips, licenses screen, signed AAB, listing, Families review, closed testing                                                 |
 
 ---
 

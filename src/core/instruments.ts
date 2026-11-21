@@ -3,14 +3,7 @@ import { pitchClass } from './pitch'
 
 /** Marker drawn on every note so color is never the only signal. */
 export type NoteShape =
-  | 'circle'
-  | 'square'
-  | 'triangle'
-  | 'diamond'
-  | 'star'
-  | 'hexagon'
-  | 'heart'
-  | 'ring'
+  'circle' | 'square' | 'triangle' | 'diamond' | 'star' | 'hexagon' | 'heart' | 'ring'
 
 export interface InstrumentNote {
   midi: number
@@ -43,7 +36,7 @@ export interface Palette {
 
 /** Classic children's xylophone rainbow: C red through B violet. */
 const RAINBOW_7: Record<number, string> = {
-  0: '#E53935', // C red
+  0: '#D32F2F', // C red
   2: '#FB8C00', // D orange
   4: '#FDD835', // E yellow
   5: '#43A047', // F green
@@ -67,23 +60,43 @@ export const PALETTES: readonly Palette[] = [
     id: 'high-contrast',
     name: 'High contrast',
     colors: fillChromatic({
-      0: '#D50000', 2: '#FF6D00', 4: '#FFD600', 5: '#00C853',
-      7: '#2962FF', 9: '#AA00FF', 11: '#3E2723',
+      0: '#D50000',
+      2: '#FF6D00',
+      4: '#FFD600',
+      5: '#00C853',
+      7: '#2962FF',
+      9: '#AA00FF',
+      11: '#3E2723',
     }),
   },
   {
     id: 'pastel',
     name: 'Pastel',
     colors: fillChromatic({
-      0: '#F28B82', 2: '#FBBC04', 4: '#FFF475', 5: '#CCFF90',
-      7: '#AECBFA', 9: '#D7AEFB', 11: '#FDCFE8',
+      0: '#F28B82',
+      2: '#FBBC04',
+      4: '#FFF475',
+      5: '#CCFF90',
+      7: '#AECBFA',
+      9: '#D7AEFB',
+      11: '#FDCFE8',
     }),
   },
 ]
 
 const SHAPES_BY_PC: readonly NoteShape[] = [
-  'circle', 'ring', 'square', 'ring', 'triangle', 'diamond',
-  'ring', 'star', 'ring', 'hexagon', 'ring', 'heart',
+  'circle',
+  'ring',
+  'square',
+  'ring',
+  'triangle',
+  'diamond',
+  'ring',
+  'star',
+  'ring',
+  'hexagon',
+  'ring',
+  'heart',
 ]
 
 export function shapeFor(midi: number): NoteShape {

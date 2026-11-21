@@ -72,7 +72,11 @@ function parsePart(el: Element, id: string, name: string): Part {
   let eventCounter = 0
 
   for (const [mIndex, mEl] of children(el, 'measure').entries()) {
-    const measure: Measure = { number: mEl.getAttribute('number') ?? String(mIndex + 1), length: 0, events: [] }
+    const measure: Measure = {
+      number: mEl.getAttribute('number') ?? String(mIndex + 1),
+      length: 0,
+      events: [],
+    }
     let cursor = 0
     let maxCursor = 0
     let lastStart = 0
@@ -197,9 +201,7 @@ function parseNote(
     const midi = toMidi(written) + state.transposeSemitones
     // Sounding pitch keeps the written spelling when not transposed.
     event.pitch =
-      state.transposeSemitones === 0
-        ? { ...written, midi }
-        : fromMidi(midi, written.alter < 0)
+      state.transposeSemitones === 0 ? { ...written, midi } : fromMidi(midi, written.alter < 0)
   }
   return event
 }

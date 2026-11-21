@@ -1,1 +1,43 @@
 @import 'tailwindcss';
+
+/* Design tokens. See docs/DESIGN.md section 02. Fonts are bundled locally (todo: add files under src/assets/fonts). */
+@theme {
+  --color-paper: #f3f6fa;
+  --color-ink: #1e2a47;
+  --color-birch: #e7d7b8;
+  --color-felt: #3a6f8f;
+  --color-stand: #c9d2de;
+  --color-brass: #b8893b;
+
+  --font-display: 'Young Serif', ui-serif, Georgia, serif;
+  --font-sans: 'Atkinson Hyperlegible Next', ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-soft: 0 2px 6px rgb(30 42 71 / 0.12);
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+  }
+  :focus-visible {
+    @apply outline-felt outline-2 outline-offset-2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-paper: #141b2d;
+      --color-ink: #e8edf5;
+      --color-birch: #5a4a33;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

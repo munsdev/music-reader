@@ -21,11 +21,11 @@ Version 0.1, November 2026. How a photo becomes a `Score`, and how the models ar
 
 **LICENSE STATUS OF OEMER ARTIFACTS**
 
-| Artifact | Training data | Data license | Usable? |
-|---|---|---|---|
-| Model 1 (`1st_model.onnx`, staff vs symbols, 70.8 MB) | CvcMuscima-Distortions | CC BY-NC-SA 4.0 (non-commercial research) | **No.** Retrain. |
-| Model 2 (`2nd_model.onnx`, symbol classes, 38.4 MB) | DeepScores-extended | CC BY 4.0 | Yes, with attribution |
-| SVM classifiers | Extracted from DeepScores-extended | CC BY 4.0 | Yes, with attribution. Retrain anyway for reproducibility |
+| Artifact                                              | Training data                      | Data license                              | Usable?                                                   |
+| ----------------------------------------------------- | ---------------------------------- | ----------------------------------------- | --------------------------------------------------------- |
+| Model 1 (`1st_model.onnx`, staff vs symbols, 70.8 MB) | CvcMuscima-Distortions             | CC BY-NC-SA 4.0 (non-commercial research) | **No.** Retrain.                                          |
+| Model 2 (`2nd_model.onnx`, symbol classes, 38.4 MB)   | DeepScores-extended                | CC BY 4.0                                 | Yes, with attribution                                     |
+| SVM classifiers                                       | Extracted from DeepScores-extended | CC BY 4.0                                 | Yes, with attribution. Retrain anyway for reproducibility |
 
 A free app with tips counts as commercial use for the purpose of a non-commercial license. Do not ship any artifact trained on NC data, even temporarily.
 
@@ -35,15 +35,15 @@ A free app with tips counts as commercial use for the purpose of a non-commercia
 
 ### Seven stages, each testable on its own
 
-| # | Stage | Input ▶ output | Implementation |
-|---|---|---|---|
-| 1 | Page detection and dewarp | Camera image ▶ flat, cropped grayscale page | OpenCV: edge detection, largest quadrilateral, perspective transform; optional mild unwarp |
-| 2 | Normalize | Page ▶ fixed-width image (staff spacing normalized) | Estimate staff line spacing from run-length histogram; rescale so spacing is a constant |
-| 3 | Segmentation | Image ▶ two class maps | Model 1 (staff lines, symbols), Model 2 (noteheads, stems, clefs, accidentals, rests, barlines...) via ONNX Runtime, tiled with overlap |
-| 4 | Staff extraction | Staff map ▶ staves and systems | Port of oemer `staffline_extraction` |
-| 5 | Symbol extraction | Class maps ▶ noteheads, clefs, accidentals, rests, barlines | Port of oemer `notehead_extraction`, `symbol_extraction`, `note_group_extraction`; SVMs for rest and accidental types |
-| 6 | Rhythm and assembly | Symbols ▶ voices, durations, measures | Port of oemer `rhythm_extraction` and `build_system` |
-| 7 | Output | Assembly ▶ `RecognitionResult` | MusicXML string plus per-note bounding box and confidence |
+| #   | Stage                     | Input ▶ output                                              | Implementation                                                                                                                          |
+| --- | ------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Page detection and dewarp | Camera image ▶ flat, cropped grayscale page                 | OpenCV: edge detection, largest quadrilateral, perspective transform; optional mild unwarp                                              |
+| 2   | Normalize                 | Page ▶ fixed-width image (staff spacing normalized)         | Estimate staff line spacing from run-length histogram; rescale so spacing is a constant                                                 |
+| 3   | Segmentation              | Image ▶ two class maps                                      | Model 1 (staff lines, symbols), Model 2 (noteheads, stems, clefs, accidentals, rests, barlines...) via ONNX Runtime, tiled with overlap |
+| 4   | Staff extraction          | Staff map ▶ staves and systems                              | Port of oemer `staffline_extraction`                                                                                                    |
+| 5   | Symbol extraction         | Class maps ▶ noteheads, clefs, accidentals, rests, barlines | Port of oemer `notehead_extraction`, `symbol_extraction`, `note_group_extraction`; SVMs for rest and accidental types                   |
+| 6   | Rhythm and assembly       | Symbols ▶ voices, durations, measures                       | Port of oemer `rhythm_extraction` and `build_system`                                                                                    |
+| 7   | Output                    | Assembly ▶ `RecognitionResult`                              | MusicXML string plus per-note bounding box and confidence                                                                               |
 
 The plugin returns MusicXML so the web layer uses the same import path as files. Bounding boxes and confidences come alongside, keyed by note order, for the Review screen.
 
@@ -65,12 +65,12 @@ A `MockOmrEngine` returns fixture MusicXML so the whole UI can be developed and 
 
 **DATA (COMMERCIALLY USABLE ONLY)**
 
-| Dataset | License | Use |
-|---|---|---|
-| DeepScoresV2 (Zenodo 4012193) | CC BY 4.0 | Primary training data for both models; includes staff line annotations |
-| OpenScore Lieder | CC0 | Source scores for synthetic renders |
-| PDMX `no_license_conflict` subset | CC BY 4.0 dataset, public-domain scores | Source scores for synthetic renders |
-| Synthetic renders | Generated by us | Render source scores with an engraver, apply phone-style augmentation (perspective, blur, shadows, paper texture, JPEG) |
+| Dataset                           | License                                 | Use                                                                                                                     |
+| --------------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| DeepScoresV2 (Zenodo 4012193)     | CC BY 4.0                               | Primary training data for both models; includes staff line annotations                                                  |
+| OpenScore Lieder                  | CC0                                     | Source scores for synthetic renders                                                                                     |
+| PDMX `no_license_conflict` subset | CC BY 4.0 dataset, public-domain scores | Source scores for synthetic renders                                                                                     |
+| Synthetic renders                 | Generated by us                         | Render source scores with an engraver, apply phone-style augmentation (perspective, blur, shadows, paper texture, JPEG) |
 
 Before using any dataset, re-check its license at the source and record the date in `models/DATA_LICENSES.md`.
 

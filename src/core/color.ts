@@ -14,7 +14,10 @@ export function parseHex(hex: string): Rgb {
 }
 
 export function toHex({ r, g, b }: Rgb): string {
-  const h = (v: number) => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')
+  const h = (v: number) =>
+    Math.round(Math.min(255, Math.max(0, v)))
+      .toString(16)
+      .padStart(2, '0')
   return `#${h(r)}${h(g)}${h(b)}`.toUpperCase()
 }
 

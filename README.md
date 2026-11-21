@@ -1,32 +1,27 @@
-# React + TypeScript + Vite
+# Music Reader
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Turn sheet music into colored notes for the instrument you have: a toy xylophone, desk bells, tuned tubes or a keyboard with stickers. Scan a page (or several), fit the song to your instrument, play along, and print it.
 
-Currently, two official plugins are available:
+Free, offline, no ads, no account. Working title.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Status
 
-## React Compiler
+Early development. See [docs/DESIGN.md](docs/DESIGN.md) for the product and UX design and [docs/OMR.md](docs/OMR.md) for the recognition plan.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Develop
 
-## Expanding the Oxlint configuration
+Requires Node 22 and, for Android builds, JDK 21 and the Android SDK (Android Studio installs both).
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```
+npm install
+npm run dev
+npm test
+npm run android:sync
+cd android && ./gradlew assembleDebug
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Every push to `main` builds a debug APK in GitHub Actions; download it from the run's artifacts.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE). Third-party licenses are listed in the app under Settings, Open-source licenses.

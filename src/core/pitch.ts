@@ -19,12 +19,32 @@ export const pitchClass = (midi: number): number => ((midi % 12) + 12) % 12
 
 /** Spellings used when a MIDI number has to be turned back into a name. */
 const SHARP_SPELLING: readonly [Step, number][] = [
-  ['C', 0], ['C', 1], ['D', 0], ['D', 1], ['E', 0], ['F', 0],
-  ['F', 1], ['G', 0], ['G', 1], ['A', 0], ['A', 1], ['B', 0],
+  ['C', 0],
+  ['C', 1],
+  ['D', 0],
+  ['D', 1],
+  ['E', 0],
+  ['F', 0],
+  ['F', 1],
+  ['G', 0],
+  ['G', 1],
+  ['A', 0],
+  ['A', 1],
+  ['B', 0],
 ]
 const FLAT_SPELLING: readonly [Step, number][] = [
-  ['C', 0], ['D', -1], ['D', 0], ['E', -1], ['E', 0], ['F', 0],
-  ['G', -1], ['G', 0], ['A', -1], ['A', 0], ['B', -1], ['B', 0],
+  ['C', 0],
+  ['D', -1],
+  ['D', 0],
+  ['E', -1],
+  ['E', 0],
+  ['F', 0],
+  ['G', -1],
+  ['G', 0],
+  ['A', -1],
+  ['A', 0],
+  ['B', -1],
+  ['B', 0],
 ]
 
 /**
@@ -47,7 +67,13 @@ export function transpose(p: Pitch, semitones: number, preferFlats = p.alter < 0
 export type NamingSystem = 'english' | 'german' | 'solfege'
 
 const SOLFEGE: Record<Step, string> = {
-  C: 'Do', D: 'Re', E: 'Mi', F: 'Fa', G: 'Sol', A: 'La', B: 'Si',
+  C: 'Do',
+  D: 'Re',
+  E: 'Mi',
+  F: 'Fa',
+  G: 'Sol',
+  A: 'La',
+  B: 'Si',
 }
 
 /**
