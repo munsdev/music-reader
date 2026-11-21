@@ -22,7 +22,7 @@ export function Screen({
   const navigate = useNavigate()
   const { t } = useTranslation()
   return (
-    <div className="flex min-h-dvh flex-col pt-[env(safe-area-inset-top)]">
+    <div className="flex min-h-dvh flex-col pt-[var(--sat)]">
       <header className="bg-paper/92 sticky top-0 z-20 flex min-h-16 items-center gap-1 px-2 backdrop-blur">
         {back && (
           <IconButton
@@ -39,9 +39,11 @@ export function Screen({
         </h1>
         {actions}
       </header>
-      <main className="flex-1 px-4 pb-6">{children}</main>
+      <main className={`flex-1 px-4 ${footer ? 'pb-6' : 'pb-[calc(1.5rem+var(--sab))]'}`}>
+        {children}
+      </main>
       {footer && (
-        <div className="border-stand/60 bg-paper/95 sticky bottom-0 z-20 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+        <div className="border-stand/60 bg-paper/95 sticky bottom-0 z-20 border-t px-4 pt-3 pb-[calc(0.75rem+var(--sab))] backdrop-blur">
           {footer}
         </div>
       )}

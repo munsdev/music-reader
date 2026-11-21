@@ -19,7 +19,23 @@
   --shadow-soft: 0 2px 6px rgb(30 42 71 / 0.12);
 }
 
+/*
+ * Safe areas. On Android the app draws under the status and navigation bars, and older
+ * WebViews report 0 for env(safe-area-inset-*). Capacitor's SystemBars injects the real
+ * values as --safe-area-inset-*; env() is the fallback for iOS and browsers.
+ */
+:root {
+  --sat: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --sab: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --sal: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --sar: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+}
+
 @layer base {
+  body {
+    padding-left: var(--sal);
+    padding-right: var(--sar);
+  }
   html {
     color-scheme: light dark;
   }

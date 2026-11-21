@@ -36,7 +36,7 @@ export function ToastHost() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-x-0 bottom-24 z-50 flex justify-center px-4 pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-x-0 bottom-[calc(6rem+var(--sab))] z-50 flex justify-center px-4"
     >
       <div className="bg-ink text-paper shadow-soft flex min-h-12 max-w-md items-center gap-3 rounded-2xl py-2 pr-2 pl-4">
         <span className="flex-1">{current.message}</span>

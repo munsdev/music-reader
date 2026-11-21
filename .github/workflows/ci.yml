@@ -148,6 +148,8 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
           script: |
+            adb shell cmd overlay enable com.android.internal.systemui.navbar.threebutton || true
+            sleep 3
             adb install -r apk/*.apk
             adb logcat -c
             adb shell am start -n dev.muns.musicreader/.MainActivity

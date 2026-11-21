@@ -7,6 +7,13 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
   },
+  plugins: {
+    SystemBars: {
+      // Injects --safe-area-inset-* so content can stay clear of the status and navigation bars.
+      insetsHandling: 'css',
+      style: 'DEFAULT',
+    },
+  },
 }
 
 export default config

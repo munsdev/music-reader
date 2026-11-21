@@ -84,7 +84,7 @@ export function CropScreen() {
 
   const index = song.pages.indexOf(page)
   return (
-    <div className="bg-ink text-paper flex h-dvh flex-col pt-[env(safe-area-inset-top)]">
+    <div className="bg-ink text-paper flex h-dvh flex-col pt-[var(--sat)]">
       <header className="flex min-h-16 items-center gap-2 px-3">
         <Button className="text-paper" onClick={() => navigate(-1)}>
           {t('common.cancel')}
@@ -174,7 +174,7 @@ export function CropScreen() {
             )
           })()}
       </div>
-      <div className="px-4 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="px-4 pt-2 pb-[calc(1rem+var(--sab))]">
         <p
           className={`mb-3 text-center ${valid ? 'text-paper/80' : 'text-birch font-semibold'}`}
           role="status"

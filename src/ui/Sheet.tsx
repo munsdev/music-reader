@@ -38,18 +38,26 @@ export function Sheet({
         else onClose()
       }}
       onClick={(e) => e.target === ref.current && onClose()}
-      className="bg-paper text-ink backdrop:bg-ink/40 m-0 mt-auto max-h-[88dvh] w-full max-w-none rounded-t-[28px] p-0 sm:mx-auto sm:mb-auto sm:max-w-lg sm:rounded-[28px]"
+      className="bg-paper text-ink backdrop:bg-ink/40 m-0 mt-auto max-h-[calc(100dvh-var(--sat)-1rem)] w-full max-w-none rounded-t-[28px] p-0 sm:mx-auto sm:mb-auto sm:max-w-lg sm:rounded-[28px]"
     >
       {open && (
-        <div className="flex max-h-[88dvh] flex-col">
+        <div className="flex max-h-[calc(100dvh-var(--sat)-1rem)] flex-col">
           <div className="flex items-center gap-2 px-5 pt-3 pb-1">
             <h2 className="font-display flex-1 text-2xl">{title}</h2>
             <IconButton label={t('common.close')} onClick={onClose}>
               <X size={22} />
             </IconButton>
           </div>
-          <div className="overflow-y-auto px-5 pb-5">{children}</div>
-          {footer && <div className="border-stand/70 border-t px-5 py-3">{footer}</div>}
+          <div
+            className={`overflow-y-auto px-5 ${footer ? 'pb-5' : 'pb-[calc(1.25rem+var(--sab))]'}`}
+          >
+            {children}
+          </div>
+          {footer && (
+            <div className="border-stand/70 border-t px-5 pt-3 pb-[calc(0.75rem+var(--sab))]">
+              {footer}
+            </div>
+          )}
         </div>
       )}
     </dialog>

@@ -11,7 +11,7 @@ export function WelcomeScreen() {
   const navigate = useNavigate()
   const labels = useLabelSettings()
   return (
-    <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-8 px-6 pt-[env(safe-area-inset-top)] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+    <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-8 px-6 pt-[var(--sat)] pb-[calc(1.5rem+var(--sab))]">
       <div>
         <h1 className="font-display text-4xl leading-tight">{t('onboarding.title')}</h1>
         <p className="text-ink/75 mt-3 text-lg">{t('onboarding.body')}</p>

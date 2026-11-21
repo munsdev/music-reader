@@ -18,7 +18,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
 
 export function CrashReport({ message }: { message: string }) {
   return (
-    <div className="bg-paper text-ink min-h-dvh p-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
+    <div className="bg-paper text-ink min-h-dvh p-6 pt-[max(1.5rem,var(--sat))]">
       <h1 className="font-display text-2xl">Music Reader could not start</h1>
       <p className="mt-2">Take a screenshot of this screen and send it to Casey.</p>
       <pre className="bg-ink/6 mt-4 overflow-auto rounded-xl p-3 text-xs whitespace-pre-wrap">
