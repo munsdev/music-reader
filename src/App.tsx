@@ -99,11 +99,26 @@ function AppRoutes() {
 export default function App() {
   useAppearance()
   const [ready, setReady] = useState(false)
-  const hydrated = useSettings.persist.hasHydrated()
-  const [settingsReady, setSettingsReady] = useState(hydrated)
-  useEffect(() => useSettings.persist.onFinishHydration(() => setSettingsReady(true)), [])
+  const [settingsReady, setSettingsReady] = useState(() => useSettings.persist.hasHydrated())
   useEffect(() => {
-    void seedIfEmpty().finally(() => setReady(true))
+    const unsub = useSettings.persist.onFinishHydration(() => setSettingsReady(true))
+    // Hydration may finish before this effect subscribes; check again.
+    if (useSettings.persist.hasHydrated()) setSettingsReady(true)
+    // Never block startup on saved settings: continue with defaults after 1.5 s.
+    const timer = setTimeout(() => setSettingsReady(true), 1500)
+    return () => {
+      unsub()
+      clearTimeout(timer)
+    }
+  }, [])
+  useEffect(() => {
+    const timer = setTimeout(() => setReady(true), 3000)
+    void seedIfEmpty()
+      .catch((e: unknown) => console.error('seed failed', e))
+      .finally(() => {
+        clearTimeout(timer)
+        setReady(true)
+      })
   }, [])
   if (!ready || !settingsReady) return null
   return (

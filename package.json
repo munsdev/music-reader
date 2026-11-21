@@ -32,7 +32,6 @@
     "@fontsource/young-serif": "^5.3.0",
     "@pdf-lib/fontkit": "^1.1.1",
     "@phosphor-icons/react": "^2.1.10",
-    "cordova-plugin-purchase": "^13.20.0",
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
     "fflate": "^0.8.3",
