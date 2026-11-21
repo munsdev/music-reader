@@ -60,7 +60,7 @@ jobs:
   release:
     name: Signed test release
     needs: web
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -104,7 +104,7 @@ jobs:
         if: env.HAS_KEY == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          NOTES: ${{ github.event.head_commit.message }}
+          NOTES: ${{ github.event.head_commit.message || 'Manual test build' }}
         run: |
           SHA=$(sha256sum music-reader.apk | cut -d' ' -f1)
           TAG="v$VERSION_NAME"
