@@ -18,6 +18,8 @@ import { WriteScreen } from './features/stand/WriteScreen'
 import { systemLanguage } from './i18n'
 import { useSettings } from './state/settings'
 import { ToastHost } from './ui/toast'
+import { UpdateSheet } from './features/settings/UpdateSheet'
+import { updatesSupported } from './platform/updates'
 
 /** Applies theme and language settings to the document. */
 function useAppearance() {
@@ -107,6 +109,7 @@ export default function App() {
   return (
     <HashRouter>
       <AppRoutes />
+      {updatesSupported() && <UpdateSheet />}
       <ToastHost />
     </HashRouter>
   )

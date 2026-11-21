@@ -27,7 +27,7 @@ npm run android:open   # open in Android Studio
 cd android && ./gradlew assembleDebug
 ```
 
-CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck, tests, web build, and builds the debug APK as an artifact.
+CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck, tests, web build, and builds the debug APK as an artifact. On pushes to `main` it also builds a signed APK and publishes a GitHub release (`music-reader.apk` and `latest.json`) that installed apps update from. Signing uses the `ANDROID_KEYSTORE_BASE64` and `ANDROID_KEYSTORE_PASSWORD` secrets; without them the release job is skipped.
 
 ## Layout
 
@@ -51,7 +51,7 @@ docs/          Design documents.
 ## Rules
 
 - **Licensing is a hard constraint.** Only add dependencies, fonts, models, datasets or assets whose licenses allow use in a free app that takes tips (MIT, BSD, Apache-2.0, ISC, OFL, CC0, CC BY). Never NC, ND, GPL or AGPL. Record every model and dataset with its license and the date checked in `models/DATA_LICENSES.md`, and add required attributions to the Licenses screen.
-- **Offline and private.** No analytics, no ads SDKs, no network calls except model download and Play Billing. Microphone only while a listening practice mode runs.
+- **Offline and private.** No analytics, no ads SDKs, no network calls except model download, Play Billing, and the update check of sideloaded test builds (`src/platform/updates.ts`, reads `latest.json` from GitHub Releases). Microphone only while a listening practice mode runs.
 - **Core logic stays pure.** Anything in `src/core` must run in Node under Vitest. Add tests with every change there.
 - **Design tokens only.** Colors, type and radii come from the Tailwind theme defined in `src/index.css` (`paper`, `ink`, `birch`, `felt`, `stand`, `brass`). Note colors come only from instrument profiles. No ad-hoc hex values in components.
 - **Accessibility.** Touch targets at least 48 dp. Every note has a label and a shape, not color alone. Every interactive element has an accessible name. Respect `prefers-reduced-motion`.

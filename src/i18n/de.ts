@@ -354,6 +354,23 @@ export const de: Messages = {
     tip_medium: 'Mittleres Trinkgeld, {{price}}',
     tip_large: 'Großes Trinkgeld, {{price}}',
   },
+  updates: {
+    title: 'Update verfügbar',
+    body: 'Version {{version}} von Music Reader ist bereit.',
+    install: 'Update installieren',
+    downloading: 'Wird heruntergeladen, {{percent}} %',
+    permission:
+      'Erlaube Music Reader im gerade geöffneten Fenster, Updates zu installieren. Komm dann zurück und tippe noch einmal auf Update installieren.',
+    failed:
+      'Das Update konnte nicht heruntergeladen werden. Prüfe deine Verbindung und versuche es noch einmal.',
+    section: 'Updates',
+    current: 'Das ist Version {{version}}.',
+    check: 'Nach Updates suchen',
+    upToDate: 'Du hast die neueste Version.',
+    share: 'App teilen',
+    shareText:
+      'Music Reader macht aus Noten farbige Noten für Xylofone und Glocken für Kinder. Für Android installieren:',
+  },
   licenses: {
     title: 'Open-Source-Lizenzen',
     intro:

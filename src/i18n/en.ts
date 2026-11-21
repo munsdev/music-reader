@@ -335,6 +335,22 @@ export const en = {
     tip_medium: 'Medium tip, {{price}}',
     tip_large: 'Large tip, {{price}}',
   },
+  updates: {
+    title: 'Update available',
+    body: 'Version {{version}} of Music Reader is ready.',
+    install: 'Install update',
+    downloading: 'Downloading, {{percent}}%',
+    permission:
+      'Allow Music Reader to install updates in the screen that just opened, then come back and tap Install update again.',
+    failed: 'The update could not be downloaded. Check your connection and try again.',
+    section: 'Updates',
+    current: 'This is version {{version}}.',
+    check: 'Check for updates',
+    upToDate: 'You have the newest version.',
+    share: 'Share the app',
+    shareText:
+      "Music Reader turns sheet music into colored notes for kids' xylophones and bells. Install it on Android:",
+  },
   licenses: {
     title: 'Open-source licenses',
     intro:

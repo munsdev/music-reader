@@ -56,3 +56,69 @@ jobs:
         with:
           name: music-reader-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
+
+  release:
+    name: Signed test release
+    needs: web
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      VERSION_CODE: ${{ github.run_number }}
+      VERSION_NAME: 0.1.${{ github.run_number }}
+    steps:
+      - name: Skip when the signing key is not set up
+        if: env.HAS_KEY != 'true'
+        run: echo "ANDROID_KEYSTORE_BASE64 is not set, skipping the release."
+      - uses: actions/checkout@v5
+        if: env.HAS_KEY == 'true'
+      - uses: actions/setup-node@v5
+        if: env.HAS_KEY == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v5
+        if: env.HAS_KEY == 'true'
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - name: Build signed APK
+        if: env.HAS_KEY == 'true'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          VITE_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/release.jks"
+          npm ci
+          npm run build
+          npx cap sync android
+          (cd android && ./gradlew assembleRelease --no-daemon)
+          cp android/app/build/outputs/apk/release/app-release.apk music-reader.apk
+          rm "$RUNNER_TEMP/release.jks"
+      - name: Publish release
+        if: env.HAS_KEY == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTES: ${{ github.event.head_commit.message }}
+        run: |
+          SHA=$(sha256sum music-reader.apk | cut -d' ' -f1)
+          TAG="v$VERSION_NAME"
+          BASE="https://github.com/${{ github.repository }}/releases/download/$TAG"
+          node -e '
+            const fs = require("fs")
+            const notes = (process.env.NOTES || "").split("\n")[0]
+            fs.writeFileSync("latest.json", JSON.stringify({
+              versionCode: Number(process.env.VERSION_CODE),
+              versionName: process.env.VERSION_NAME,
+              apkUrl: process.argv[1],
+              sha256: process.argv[2],
+              notes,
+              publishedAt: new Date().toISOString(),
+            }, null, 2))
+          ' "$BASE/music-reader.apk" "$SHA"
+          gh release create "$TAG" music-reader.apk latest.json --title "Test build $VERSION_NAME" --notes "$NOTES" --latest

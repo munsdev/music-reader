@@ -1,4 +1,6 @@
 import {
+  ArrowsClockwise,
+  ShareNetwork,
   ArrowSquareOut,
   Coffee,
   DownloadSimple,
@@ -18,6 +20,9 @@ import { Screen, Section } from '../../ui/Screen'
 import { toast } from '../../ui/toast'
 import { ModelsSheet } from '../stand/PagesScreen'
 import { SupportSheet } from './SupportSheet'
+import { UpdateSheet } from './UpdateSheet'
+import { Share } from '@capacitor/share'
+import { currentVersion, SHARE_URL, updatesSupported, useUpdates } from '../../platform/updates'
 
 export const SOURCE_URL = 'https://github.com/munsdev/music-reader'
 
@@ -28,8 +33,12 @@ export function SettingsScreen() {
   const [models, setModels] = useState<ModelStatus | null>(null)
   const [install, setInstall] = useState(false)
   const [support, setSupport] = useState(false)
+  const [version, setVersion] = useState('')
+  const [showUpdate, setShowUpdate] = useState(false)
+  const checkUpdates = useUpdates((u) => u.check)
   const refresh = () => void omr.modelStatus().then(setModels)
   useEffect(refresh, [])
+  useEffect(() => void currentVersion().then((v) => setVersion(v.name)), [])
 
   return (
     <Screen title={t('settings.title')} back="/">
@@ -169,6 +178,37 @@ export function SettingsScreen() {
         </div>
       </Section>
 
+      <Section title={t('updates.section')}>
+        <p className="py-2">{t('updates.current', { version })}</p>
+        <div className="flex flex-wrap gap-2 pb-2">
+          {updatesSupported() && (
+            <Button
+              icon={<ArrowsClockwise size={20} />}
+              onClick={async () => {
+                const found = await checkUpdates(true)
+                if (found) setShowUpdate(true)
+                else toast(t('updates.upToDate'))
+              }}
+            >
+              {t('updates.check')}
+            </Button>
+          )}
+          <Button
+            icon={<ShareNetwork size={20} />}
+            onClick={() =>
+              void Share.share({
+                title: 'Music Reader',
+                text: t('updates.shareText'),
+                url: SHARE_URL,
+                dialogTitle: t('updates.share'),
+              }).catch(() => undefined)
+            }
+          >
+            {t('updates.share')}
+          </Button>
+        </div>
+      </Section>
+
       <Section title={t('settings.about')}>
         <p className="py-2">{t('settings.privacy')}</p>
         <Button icon={<Coffee size={20} />} onClick={() => setSupport(true)}>
@@ -197,6 +237,7 @@ export function SettingsScreen() {
         }}
       />
       <SupportSheet open={support} onClose={() => setSupport(false)} />
+      {showUpdate && <UpdateSheet forceOpen onClose={() => setShowUpdate(false)} />}
     </Screen>
   )
 }
