@@ -66,10 +66,14 @@ export interface NoteEvent {
   type?: string
   dots: number
   recognition?: Recognition
+  /** Set when the user changed this note in Review or the editor. */
+  userEdited?: boolean
 }
 
 export interface Measure {
   number: string
+  /** Id of the scanned page this measure came from, for multi-page songs. */
+  page?: string
   /** Length of the measure in ticks, from its time signature or its contents. */
   length: number
   key?: number

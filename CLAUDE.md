@@ -6,6 +6,7 @@ Free, offline Android app that turns sheet music (photos or MusicXML) into color
 
 - `docs/DESIGN.md`: product, visual language, screens, flows, print, play-along, data model. Source of truth for behavior and look.
 - `docs/OMR.md`: on-device recognition pipeline, model retraining, licensing of models and datasets.
+- `docs/HANDOFF.md`: what is built, what is left, in priority order.
 
 If a change would contradict either document, stop and ask the owner (Casey) first, and say exactly what would change.
 
@@ -32,13 +33,16 @@ CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck, tests, web b
 
 ```
 src/core/      Pure TypeScript logic, no React, no Capacitor. Fully unit tested.
-src/omr/       Recognition engine interface, native bridge, MockOmrEngine.
-src/audio/     Web Audio synth, scheduler, pitch detection.
-src/print/     PDF and PNG export.
+src/omr/       Recognition engine interface, native bridge, MockOmrEngine, page reader.
+src/audio/     Web Audio synth, player (lookahead scheduler), pitch detection.
+src/print/     PDF export (pdf-lib, vector, embedded fonts) and sticker sheets.
 src/data/      Dexie database, repositories, backup and restore.
-src/features/  Screens and their components, one folder per area (songs, capture, review, fit, play, instruments, settings).
-src/ui/        Shared components (Bar, Button, Sheet, NoteGlyph...) and design tokens.
-src/i18n/      en and de translation files.
+src/state/     Settings store (Capacitor Preferences) and data hooks.
+src/platform/  Camera, files and sharing, fonts, PDF page import, haptics, tips (Play Billing).
+src/features/  Screens: songs, stand (play view, pages, edit, write), instruments, settings, onboarding.
+src/ui/        Shared components (Bar, controls, Sheet, Screen, InstrumentView, toast).
+src/i18n/      en and de strings; a test checks every key exists in both.
+scripts/       generate-licenses.mjs (runs before build and test; fails on copyleft or NC licenses).
 android/       Capacitor Android project and the OMR plugin module.
 models/        Training scripts, data license records. Model files are not committed.
 docs/          Design documents.

@@ -1,3 +1,4 @@
+import { labelFor } from './labels'
 import { contrast, labelColorFor } from './color'
 import { PALETTES, PRESETS, applyPalette, shiftOctave } from './instruments'
 
@@ -37,5 +38,18 @@ describe('presets', () => {
       PALETTES.find((p) => p.id === 'pastel')!,
     )
     expect(pastel.notes[0]!.color).not.toBe(x.notes[0]!.color)
+  })
+})
+
+describe('labels', () => {
+  const x = PRESETS.find((p) => p.id === 'xylophone-8')!
+  it('uses letters, German names, numbers and sticker labels', () => {
+    expect(labelFor(71, x, { style: 'letters', naming: 'english' })).toBe('B')
+    expect(labelFor(71, x, { style: 'letters', naming: 'german' })).toBe('H')
+    expect(labelFor(72, x, { style: 'numbers', naming: 'english' })).toBe('8')
+    expect(labelFor(60, x, { style: 'solfege', naming: 'english' })).toBe('Do')
+    const stickered = { ...x, notes: x.notes.map((n, i) => (i === 0 ? { ...n, label: '★' } : n)) }
+    expect(labelFor(60, stickered, { style: 'letters', naming: 'english' })).toBe('★')
+    expect(labelFor(60, x, { style: 'none', naming: 'english' })).toBe('')
   })
 })

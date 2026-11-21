@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 
-/* Design tokens. See docs/DESIGN.md section 02. Fonts are bundled locally (todo: add files under src/assets/fonts). */
+/* Design tokens. See docs/DESIGN.md section 02. Fonts are bundled from @fontsource (offline). */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 @theme {
   --color-paper: #f3f6fa;
   --color-ink: #1e2a47;
@@ -8,6 +10,8 @@
   --color-felt: #3a6f8f;
   --color-stand: #c9d2de;
   --color-brass: #b8893b;
+  --color-alert: #b3261e;
+  --color-check: #e8a317;
 
   --font-display: 'Young Serif', ui-serif, Georgia, serif;
   --font-sans: 'Atkinson Hyperlegible Next', ui-sans-serif, system-ui, sans-serif;
@@ -25,12 +29,11 @@
   :focus-visible {
     @apply outline-felt outline-2 outline-offset-2;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --color-paper: #141b2d;
-      --color-ink: #e8edf5;
-      --color-birch: #5a4a33;
-    }
+  :root[data-theme='dark'] {
+    --color-paper: #141b2d;
+    --color-ink: #e8edf5;
+    --color-birch: #5a4a33;
+    --color-stand: #3a4660;
   }
   @media (prefers-reduced-motion: reduce) {
     *,
